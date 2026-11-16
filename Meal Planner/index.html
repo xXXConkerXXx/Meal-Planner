@@ -72,6 +72,9 @@
                     <label>Dish Name</label>
                     <input type="text" id="meal-name" placeholder="e.g., Buttermilk Fried Chicken Sandwich" required>
 
+                    <label>Recipe Website Link (Optional)</label>
+                    <input type="url" id="meal-url" placeholder="https://example.com">
+
                     <label>Ingredients with Measurements (One per line: Amount + Unit + Item)</label>
                     <textarea id="meal-items" rows="6" placeholder="2 lbs Chicken breasts&#10;1 cup Buttermilk&#10;4 Brioche buns&#10;1 cup Pickles" required></textarea>
 
@@ -182,7 +185,7 @@
                 </select>
 
                 <label>Select Dish</label>
-                <select id="modal-dish-select"></select>
+                <select id="modal-dish-select" onchange="updateModalRecipeLink()"></select>
 
                 <div class="form-actions">
                     <button type="button" class="btn-green btn-full" onclick="saveCellModal()">Set Meal</button>

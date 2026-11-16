@@ -88,7 +88,8 @@ function buildMonthGridHTML(slot, clickable = false) {
     const prevDays = new Date(prevY, prevM + 1, 0).getDate();
     const nextY = viewMonth === 11 ? viewYear + 1 : viewYear;
     const nextM = viewMonth === 11 ? 0 : viewMonth + 1;
-    const todayKey = formatDateKey(today.getFullYear(), today.getMonth(), today.getDate());
+    const now = new Date();
+    const todayKey = formatDateKey(now.getFullYear(), now.getMonth(), now.getDate());
 
     const makeCell = (y, m, d, isAdj) => {
         const key = formatDateKey(y, m, d);
@@ -96,7 +97,10 @@ function buildMonthGridHTML(slot, clickable = false) {
         const adjClass = isAdj ? " adjacent-month" : "";
         const clickAttr = clickable ? ` onclick="openCellModal('${key}')"` : "";
         const meal = yearlyPlan[key]?.[slot];
-        return `<div class="day-cell${adjClass}${isToday}"${clickAttr}><div class="day-num">${d}</div>${meal ? `<div class="meal-title">${meal.name}</div><div class="meal-items">${meal.items}</div>` : ""}</div>`;
+        const linkHTML = (meal && meal.url && clickable)
+            ? `<div style="margin-top: 4px;"><a href="${meal.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="font-size: 0.75rem; color: var(--mode-color); font-weight: bold;">Recipe ↗</a></div>`
+            : "";
+        return `<div class="day-cell${adjClass}${isToday}"${clickAttr}><div class="day-num">${d}</div>${meal ? `<div class="meal-title">${meal.name}</div><div class="meal-items">${meal.items}</div>${linkHTML}` : ""}</div>`;
     };
 
     let html = "";

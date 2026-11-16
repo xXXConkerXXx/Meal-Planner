@@ -21,7 +21,7 @@ h3 { margin: 0 0 10px 0; font-size: 1rem; color: var(--text-muted); }
 .panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; }
 .stacked-form { display: flex; flex-direction: column; gap: 12px; }
 .stacked-form label { font-weight: bold; font-size: 0.9rem; margin-bottom: -6px; }
-.stacked-form input[type="text"], .stacked-form textarea, .stacked-form select {
+.stacked-form input[type="text"], .stacked-form input[type="url"], .stacked-form textarea, .stacked-form select {
     width: 100%; box-sizing: border-box; padding: 10px 12px; background: var(--bg-main); color: var(--text-main);
     border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 0.95rem;
 }

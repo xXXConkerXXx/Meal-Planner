@@ -20,8 +20,10 @@ document.getElementById("meal-form").addEventListener("submit", e => {
 
     const lines = document.getElementById("meal-items").value.split(/\n/).map(l => l.trim()).filter(Boolean);
     const name = document.getElementById("meal-name").value.trim();
+    const url = document.getElementById("meal-url").value.trim();
     const dishObj = {
         name: name,
+        url: url,
         itemsList: lines,
         items: lines.map(i => "• " + i).join("\n"),
         types: types,
@@ -58,6 +60,7 @@ function startEditDish(i) {
     document.getElementById("cancel-edit-btn").classList.remove("hidden");
 
     document.getElementById("meal-name").value = dish.name;
+    document.getElementById("meal-url").value = dish.url || "";
     document.getElementById("meal-items").value = (dish.itemsList || []).join("\n");
 
     const dishTypes = getMealTypesList(dish);
@@ -157,6 +160,7 @@ function renderSavedMealsList() {
         <li>
             <span><strong>${m.name}</strong> (${getMealTypesList(m).join(", ")})</span>
             <div class="saved-item-actions">
+                ${m.url ? `<a href="${m.url}" target="_blank" rel="noopener noreferrer" class="btn-edit" style="text-decoration: none;">Link ↗</a>` : ""}
                 <button type="button" class="btn-edit" onclick="startEditDish(${i})">Edit</button>
                 <button type="button" class="btn-delete" onclick="deleteMeal(${i})">Remove</button>
             </div>

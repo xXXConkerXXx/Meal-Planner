@@ -200,3 +200,4 @@ document.getElementById("theme-select").value = activeTheme;
 applyClasses();
 loadBackupData();
 refreshAllViews();
+document.getElementById("meal-form").reset()

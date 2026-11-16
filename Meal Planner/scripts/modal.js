@@ -12,6 +12,21 @@ function openCellModal(dateKey) {
     document.getElementById("cell-modal").classList.remove("hidden");
 }
 
+function updateModalRecipeLink() {
+    const idx = document.getElementById("modal-dish-select").value;
+    const linkEl = document.getElementById("modal-recipe-link");
+    if (!linkEl) return;
+
+    const dish = idx !== "" ? meals.at(Number(idx)) : null;
+    if (dish && dish.url) {
+        linkEl.href = dish.url;
+        linkEl.classList.remove("hidden");
+    } else {
+        linkEl.href = "#";
+        linkEl.classList.add("hidden");
+    }
+}
+
 function populateModalDishes() {
     const slot = document.getElementById("modal-slot").value;
     const sel = document.getElementById("modal-dish-select");
@@ -21,6 +36,8 @@ function populateModalDishes() {
     sel.innerHTML = filtered.length
         ? filtered.map(m => `<option value="${meals.indexOf(m)}" ${currentDish && currentDish.name === m.name ? "selected" : ""}>${m.name}</option>`).join("")
         : `<option value="">No ${slot} dishes saved yet</option>`;
+
+    updateModalRecipeLink();
 }
 
 function saveCellModal() {
