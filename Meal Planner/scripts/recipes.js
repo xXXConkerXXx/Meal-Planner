@@ -1,8 +1,21 @@
 let editingMealIndex = -1;
 
+function mealSupportsSlot(meal, slot) {
+    if (Array.isArray(meal.types)) return meal.types.includes(slot);
+    return meal.type === slot;
+}
+
+function getMealTypesList(meal) {
+    if (Array.isArray(meal.types)) return meal.types;
+    return meal.type ? [meal.type] : [];
+}
+
 document.getElementById("meal-form").addEventListener("submit", e => {
     e.preventDefault();
-    const seasons = Array.from(document.querySelectorAll(".checks input:checked")).map(cb => cb.value);
+    const types = Array.from(document.querySelectorAll("#meal-type-checks input:checked")).map(cb => cb.value);
+    if (!types.length) return showToast("Select at least one meal time.", true);
+
+    const seasons = Array.from(document.querySelectorAll("#meal-season-checks input:checked")).map(cb => cb.value);
     if (!seasons.length) return showToast("Select at least one season.", true);
 
     const lines = document.getElementById("meal-items").value.split(/\n/).map(l => l.trim()).filter(Boolean);
@@ -11,7 +24,7 @@ document.getElementById("meal-form").addEventListener("submit", e => {
         name: name,
         itemsList: lines,
         items: lines.map(i => "• " + i).join("\n"),
-        type: document.getElementById("meal-type").value,
+        types: types,
         seasons: seasons
     };
 
@@ -46,9 +59,13 @@ function startEditDish(i) {
 
     document.getElementById("meal-name").value = dish.name;
     document.getElementById("meal-items").value = (dish.itemsList || []).join("\n");
-    document.getElementById("meal-type").value = dish.type;
 
-    document.querySelectorAll(".checks input").forEach(cb => {
+    const dishTypes = getMealTypesList(dish);
+    document.querySelectorAll("#meal-type-checks input").forEach(cb => {
+        cb.checked = dishTypes.includes(cb.value);
+    });
+
+    document.querySelectorAll("#meal-season-checks input").forEach(cb => {
         cb.checked = dish.seasons.includes(cb.value);
     });
 }
@@ -80,7 +97,7 @@ function populateDayDropdown() {
 
 function updateAssignMealDropdown() {
     const slot = document.getElementById("assign-slot").value;
-    const filtered = meals.filter(m => m.type === slot);
+    const filtered = meals.filter(m => mealSupportsSlot(m, slot));
     document.getElementById("assign-meal").innerHTML = filtered.length
         ? filtered.map(m => `<option value="${meals.indexOf(m)}">${m.name}</option>`).join("")
         : `<option value="">No ${slot} dishes saved</option>`;
@@ -138,7 +155,7 @@ function renderSavedMealsList() {
     document.getElementById("recipe-count").textContent = meals.length;
     document.getElementById("saved-meals-list").innerHTML = meals.map((m, i) => `
         <li>
-            <span><strong>${m.name}</strong> (${m.type})</span>
+            <span><strong>${m.name}</strong> (${getMealTypesList(m).join(", ")})</span>
             <div class="saved-item-actions">
                 <button type="button" class="btn-edit" onclick="startEditDish(${i})">Edit</button>
                 <button type="button" class="btn-delete" onclick="deleteMeal(${i})">Remove</button>

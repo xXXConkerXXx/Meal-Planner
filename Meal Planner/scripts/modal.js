@@ -15,7 +15,7 @@ function openCellModal(dateKey) {
 function populateModalDishes() {
     const slot = document.getElementById("modal-slot").value;
     const sel = document.getElementById("modal-dish-select");
-    const filtered = meals.filter(m => m.type === slot);
+    const filtered = meals.filter(m => mealSupportsSlot(m, slot));
     const currentDish = yearlyPlan[modalDateKey]?.[slot];
 
     sel.innerHTML = filtered.length

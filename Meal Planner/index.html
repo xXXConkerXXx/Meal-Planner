@@ -23,6 +23,7 @@
                 <option value="light">Theme: Light</option>
                 <option value="dark">Theme: Dark</option>
             </select>
+            <button type="button" class="btn-outline" onclick="openGuideModal()">Guide & Tips</button>
             <button type="button" class="btn-outline" onclick="toggleKioskMode()">Kitchen Mode</button>
             <button type="button" class="btn-outline" onclick="document.getElementById('json-loader').click()">Load meals.json</button>
             <button type="button" class="btn-outline" onclick="exportToFile()">Save meals.json</button>
@@ -69,24 +70,24 @@
                 <h2 id="form-heading">1. Add Dish</h2>
                 <form id="meal-form" class="stacked-form">
                     <label>Dish Name</label>
-                    <input type="text" id="meal-name" placeholder="e.g., Crawfish Étouffée" required>
+                    <input type="text" id="meal-name" placeholder="e.g., Buttermilk Fried Chicken Sandwich" required>
 
                     <label>Ingredients with Measurements (One per line: Amount + Unit + Item)</label>
-                    <textarea id="meal-items" rows="6" placeholder="2 lbs Crawfish tails&#10;1 stick Butter&#10;2 cups Onion, celery, bell pepper&#10;3 cups White rice" required></textarea>
+                    <textarea id="meal-items" rows="6" placeholder="2 lbs Chicken breasts&#10;1 cup Buttermilk&#10;4 Brioche buns&#10;1 cup Pickles" required></textarea>
 
                     <div class="form-row">
                         <div class="field-group">
                             <label>Meal Time</label>
-                            <select id="meal-type">
-                                <option value="breakfast">Breakfast (Orange)</option>
-                                <option value="lunch">Lunch (Green)</option>
-                                <option value="dinner">Dinner (Purple)</option>
-                            </select>
+                            <div id="meal-type-checks" class="checks">
+                                <label><input type="checkbox" value="breakfast" checked> Breakfast</label>
+                                <label><input type="checkbox" value="lunch" checked> Lunch</label>
+                                <label><input type="checkbox" value="dinner" checked> Dinner</label>
+                            </div>
                         </div>
 
                         <div class="field-group">
                             <label>Seasons</label>
-                            <div class="checks">
+                            <div id="meal-season-checks" class="checks">
                                 <label><input type="checkbox" value="spring" checked> Spring</label>
                                 <label><input type="checkbox" value="summer" checked> Summer</label>
                                 <label><input type="checkbox" value="fall" checked> Fall</label>
@@ -197,6 +198,8 @@
     <script src="scripts/recipes.js"></script>
     <script src="scripts/calendar.js"></script>
     <script src="scripts/modal.js"></script>
+    <script src="scripts/guide.js"></script>
     <script src="scripts/grocery.js"></script>
 </body>
 </html>
+

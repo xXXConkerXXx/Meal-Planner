@@ -25,16 +25,19 @@ function fillMonth(y, m) {
     for (let d = 1; d <= days; d++) {
         const k = formatDateKey(y, m, d);
         if (!yearlyPlan[k]) yearlyPlan[k] = {};
+        const usedToday = [];
 
         ["breakfast", "lunch", "dinner"].forEach(type => {
-            const pool = meals.filter(item => item.type === type && item.seasons.includes(season));
+            const pool = meals.filter(item => mealSupportsSlot(item, type) && item.seasons.includes(season));
             if (!pool.length) return;
 
+            const freshPool = pool.filter(item => !recentByType[type].includes(item.name) && !usedToday.includes(item.name));
             const noRepeatPool = pool.filter(item => !recentByType[type].includes(item.name));
-            const activePool = noRepeatPool.length ? noRepeatPool : pool;
+            const activePool = freshPool.length ? freshPool : (noRepeatPool.length ? noRepeatPool : pool);
             const chosen = activePool.at(Math.floor(Math.random() * activePool.length));
 
             yearlyPlan[k][type] = chosen;
+            usedToday.push(chosen.name);
             recentByType[type].push(chosen.name);
             if (recentByType[type].length > 5) recentByType[type].shift();
         });
