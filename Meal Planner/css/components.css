@@ -1,0 +1,320 @@
+.divider {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 20px 0;
+}
+
+.saved-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.saved-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    gap: 8px;
+}
+
+.saved-item-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-edit {
+    background: transparent;
+    color: #2e5a36;
+    padding: 2px 8px;
+    font-size: 0.85rem;
+}
+
+body.theme-dark .btn-edit {
+    color: #5ca86b;
+}
+
+.btn-delete {
+    background: transparent;
+    color: #8b261d;
+    padding: 2px 8px;
+    font-size: 0.85rem;
+}
+
+.tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 0;
+}
+
+.tab {
+    background: var(--bg-tab);
+    color: var(--text-main);
+    border-radius: 8px 8px 0 0;
+    padding: 10px 24px;
+}
+
+.tab.active {
+    background: var(--mode-color);
+    color: #fff;
+}
+
+.calendar-wrapper {
+    background: var(--bg-card);
+    border: 2px solid var(--mode-color);
+    border-radius: 0 8px 8px 8px;
+    overflow: hidden;
+}
+
+.weekdays, .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.weekdays div {
+    background: var(--mode-tint);
+    text-align: center;
+    font-weight: bold;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--mode-color);
+}
+
+.day-cell {
+    min-height: 110px;
+    border-right: 1px solid var(--grid-line);
+    border-bottom: 1px solid var(--grid-line);
+    padding: 8px;
+    background: var(--bg-card);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+}
+
+.day-cell:hover {
+    background: var(--mode-tint);
+    opacity: 1;
+}
+
+.day-cell.adjacent-month {
+    background: var(--bg-tab);
+    opacity: 0.72;
+}
+
+.day-cell.adjacent-month:hover {
+    background: var(--mode-tint);
+    opacity: 1;
+}
+
+.day-cell.current-day {
+    background: var(--mode-tint) !important;
+    outline: 2px solid var(--mode-color);
+    outline-offset: -2px;
+    z-index: 5;
+}
+
+.day-cell.current-day .day-num {
+    color: var(--mode-color);
+    font-weight: 900;
+}
+
+.day-num {
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.meal-title {
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: var(--mode-color);
+    margin-bottom: 4px;
+}
+
+.meal-items {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-style: italic;
+    white-space: pre-line;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    padding: 20px;
+}
+
+.modal-box {
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.grocery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.week-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.grocery-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+}
+
+.grocery-items li {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+
+.grocery-items input[type="checkbox"]:checked + span {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+.qty-badge {
+    font-weight: bold;
+    color: #2e5a36;
+}
+
+body.theme-dark .qty-badge {
+    color: #5ca86b;
+}
+
+#toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2e5a36;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 1000;
+}
+
+#toast.show {
+    opacity: 1;
+}
+
+#toast.error {
+    background: #8b261d;
+}
+
+@media print {
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0;
+    }
+
+    .nav-arrow,
+    .header-controls,
+    .view-switcher,
+    .preview-toolbar,
+    .screen-only,
+    .week-controls button,
+    #toast,
+    #exit-kiosk-btn,
+    .modal-backdrop {
+        display: none !important;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+
+    .print-page-section {
+        page-break-after: always;
+        break-after: page;
+        margin-bottom: 20px;
+    }
+
+    .print-page-section:last-child {
+        page-break-after: auto;
+        break-after: auto;
+    }
+
+    .print-section-heading {
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin: 10px 0;
+        text-transform: uppercase;
+        border-bottom: 2px solid #000;
+        padding-bottom: 4px;
+    }
+
+    .calendar-wrapper,
+    .panel,
+    .day-cell,
+    .grocery-items li {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border-color: #999999 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+
+    .day-cell.adjacent-month {
+        opacity: 0.6 !important;
+    }
+
+    .weekdays div {
+        color: #000000 !important;
+        background: #f0f0f0 !important;
+    }
+
+    h1, h2, .meal-title, .qty-badge {
+        color: #000000 !important;
+        background: transparent !important;
+    }
+
+    .day-cell {
+        min-height: 85px;
+        page-break-inside: avoid;
+    }
+}

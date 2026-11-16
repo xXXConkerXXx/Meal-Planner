@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Planner</title>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body class="mode-breakfast">
+    <header>
+        <div class="month-nav">
+            <button type="button" class="nav-arrow" onclick="changeMonth(-1)">◀ Prev</button>
+            <h1 id="month-title">Loading...</h1>
+            <button type="button" class="nav-arrow" onclick="changeMonth(1)">Next ▶</button>
+        </div>
+
+        <div class="header-controls">
+            <span id="season-badge"></span>
+            <select id="theme-select" onchange="setTheme(this.value)">
+                <option value="system">Theme: System</option>
+                <option value="light">Theme: Light</option>
+                <option value="dark">Theme: Dark</option>
+            </select>
+            <button type="button" class="btn-outline" onclick="toggleKioskMode()">Kitchen Mode</button>
+            <button type="button" class="btn-outline" onclick="document.getElementById('json-loader').click()">Load meals.json</button>
+            <button type="button" class="btn-outline" onclick="exportToFile()">Save meals.json</button>
+            <input type="file" id="json-loader" accept=".json" class="hidden" onchange="importFromFile(event)">
+        </div>
+
+        <div class="view-switcher">
+            <button type="button" class="view-btn active" onclick="switchView('preview', this)">Preview Calendar</button>
+            <button type="button" class="view-btn" onclick="switchView('edit', this)">Edit & Scatter Meals</button>
+            <button type="button" class="view-btn" onclick="switchView('grocery', this)">Weekly Grocery List</button>
+        </div>
+    </header>
+
+    <button type="button" id="exit-kiosk-btn" class="hidden" onclick="toggleKioskMode()">Exit Kitchen Mode</button>
+
+    <div id="preview-view">
+        <div class="toolbar preview-toolbar">
+            <button type="button" onclick="autoScatterMonth()" class="btn-green">Auto-Fill This Month</button>
+            <button type="button" onclick="autoScatterYear()" class="btn-green">Auto-Scatter Whole Year</button>
+            <button type="button" onclick="clearCurrentMonth(this)" class="btn-outline">Clear Month</button>
+            <button type="button" onclick="clearCurrentYear(this)" class="btn-outline">Clear Year</button>
+            <button type="button" onclick="printAllCalendars()" class="btn-outline">Print All 3 Calendars</button>
+        </div>
+
+        <nav class="tabs screen-only">
+            <button type="button" class="tab active" onclick="switchTab('breakfast', this)">Breakfast</button>
+            <button type="button" class="tab" onclick="switchTab('lunch', this)">Lunch</button>
+            <button type="button" class="tab" onclick="switchTab('dinner', this)">Dinner</button>
+        </nav>
+
+        <main class="calendar-wrapper screen-only">
+            <div class="weekdays">
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+            </div>
+            <div id="calendar-grid" class="calendar-grid"></div>
+        </main>
+
+        <div id="print-all-calendars" class="print-only"></div>
+    </div>
+
+    <div id="edit-view" class="hidden">
+        <div class="edit-grid">
+            <section class="panel">
+                <h2 id="form-heading">1. Add Dish</h2>
+                <form id="meal-form" class="stacked-form">
+                    <label>Dish Name</label>
+                    <input type="text" id="meal-name" placeholder="e.g., Crawfish Étouffée" required>
+
+                    <label>Ingredients with Measurements (One per line: Amount + Unit + Item)</label>
+                    <textarea id="meal-items" rows="6" placeholder="2 lbs Crawfish tails&#10;1 stick Butter&#10;2 cups Onion, celery, bell pepper&#10;3 cups White rice" required></textarea>
+
+                    <div class="form-row">
+                        <div class="field-group">
+                            <label>Meal Time</label>
+                            <select id="meal-type">
+                                <option value="breakfast">Breakfast (Orange)</option>
+                                <option value="lunch">Lunch (Green)</option>
+                                <option value="dinner">Dinner (Purple)</option>
+                            </select>
+                        </div>
+
+                        <div class="field-group">
+                            <label>Seasons</label>
+                            <div class="checks">
+                                <label><input type="checkbox" value="spring" checked> Spring</label>
+                                <label><input type="checkbox" value="summer" checked> Summer</label>
+                                <label><input type="checkbox" value="fall" checked> Fall</label>
+                                <label><input type="checkbox" value="winter" checked> Winter</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" id="save-dish-btn" class="btn-full">Save Dish</button>
+                        <button type="button" id="cancel-edit-btn" class="btn-outline hidden" onclick="cancelEditDish()">Cancel</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="panel">
+                <h2>2. Place or Scatter Meals (<span id="edit-month-label"></span>)</h2>
+                <div class="stacked-form">
+                    <label>Meal Slot</label>
+                    <select id="assign-slot" onchange="updateAssignMealDropdown()">
+                        <option value="breakfast">Breakfast (Orange)</option>
+                        <option value="lunch">Lunch (Green)</option>
+                        <option value="dinner">Dinner (Purple)</option>
+                    </select>
+
+                    <label>Choose Saved Dish</label>
+                    <select id="assign-meal"></select>
+
+                    <label>Placement Pattern</label>
+                    <select id="assign-pattern" onchange="togglePatternInputs()">
+                        <option value="single">Single Specific Day</option>
+                        <option value="weekday-month">Every Selected Weekday in This Month</option>
+                        <option value="weekday-year">Every Selected Weekday All Year</option>
+                        <option value="scatter-month">Scatter Randomly (1 Per Week This Month)</option>
+                    </select>
+
+                    <div id="single-day-box">
+                        <label>Select Day</label>
+                        <select id="assign-day"></select>
+                    </div>
+
+                    <div id="weekday-box" class="hidden">
+                        <label>Select Day of the Week</label>
+                        <select id="assign-weekday">
+                            <option value="0">Every Sunday</option>
+                            <option value="1">Every Monday</option>
+                            <option value="2">Every Tuesday</option>
+                            <option value="3">Every Wednesday</option>
+                            <option value="4">Every Thursday</option>
+                            <option value="5">Every Friday</option>
+                            <option value="6">Every Saturday</option>
+                        </select>
+                    </div>
+
+                    <button type="button" onclick="applyMealPlacement()" class="btn-green btn-full">Apply to Calendar</button>
+                </div>
+
+                <hr class="divider">
+                <h3>Saved Dishes (<span id="recipe-count">0</span>)</h3>
+                <ul id="saved-meals-list" class="saved-list"></ul>
+            </section>
+        </div>
+    </div>
+
+    <div id="grocery-view" class="hidden">
+        <section class="panel grocery-panel">
+            <div class="grocery-header">
+                <div>
+                    <h2>Weekly Grocery List</h2>
+                    <p id="grocery-week-label" class="subtitle"></p>
+                </div>
+                <div class="week-controls">
+                    <button type="button" class="nav-arrow" onclick="changeGroceryWeek(-1)">◀ Prev Week</button>
+                    <button type="button" class="nav-arrow" onclick="changeGroceryWeek(1)">Next Week ▶</button>
+                    <button type="button" onclick="window.print()" class="btn-green">Print List</button>
+                </div>
+            </div>
+
+            <div id="grocery-summary" class="grocery-list-container"></div>
+        </section>
+    </div>
+
+    <div id="cell-modal" class="modal-backdrop hidden" onclick="closeCellModal(event)">
+        <div class="modal-box panel" onclick="event.stopPropagation()">
+            <h2 id="modal-date-title">Edit Day</h2>
+            <div class="stacked-form">
+                <label>Meal Slot</label>
+                <select id="modal-slot" onchange="populateModalDishes()">
+                    <option value="breakfast">Breakfast (Orange)</option>
+                    <option value="lunch">Lunch (Green)</option>
+                    <option value="dinner">Dinner (Purple)</option>
+                </select>
+
+                <label>Select Dish</label>
+                <select id="modal-dish-select"></select>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-green btn-full" onclick="saveCellModal()">Set Meal</button>
+                    <button type="button" class="btn-outline" onclick="clearCellModal()">Clear</button>
+                    <button type="button" class="btn-outline" onclick="closeCellModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/storage.js"></script>
+    <script src="scripts/ui.js"></script>
+    <script src="scripts/recipes.js"></script>
+    <script src="scripts/calendar.js"></script>
+    <script src="scripts/modal.js"></script>
+    <script src="scripts/grocery.js"></script>
+</body>
+</html>

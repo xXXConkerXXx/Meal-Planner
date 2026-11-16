@@ -1,0 +1,23 @@
+{
+  "recipes": [
+    {
+      "name": "Chicken",
+      "itemsList": [
+        "Oil",
+        "Flour",
+        "Tony Season",
+        "Salt",
+        "Pepper"
+      ],
+      "items": "• Oil\n• Flour\n• Tony Season\n• Salt\n• Pepper",
+      "type": "dinner",
+      "seasons": [
+        "spring",
+        "summer",
+        "fall",
+        "winter"
+      ]
+    }
+  ],
+  "yearlyPlan": {}
+}
