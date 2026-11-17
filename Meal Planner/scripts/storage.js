@@ -30,6 +30,14 @@ function formatDateKey(y, m, d) {
     return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
+function normalizePlanSlot(entry) {
+    if (!entry) return { main: null, sides: [] };
+    if ("main" in entry || "sides" in entry) {
+        return { main: entry.main || null, sides: Array.isArray(entry.sides) ? entry.sides : [] };
+    }
+    return { main: entry, sides: [] };
+}
+
 function saveToDisk() {
     const payload = JSON.stringify({ recipes: meals, yearlyPlan: yearlyPlan }, null, 2);
     localStorage.setItem("meal_planner_backup", payload);

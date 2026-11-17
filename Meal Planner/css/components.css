@@ -260,7 +260,8 @@ body.theme-dark .qty-badge {
     .week-controls button,
     #toast,
     #exit-kiosk-btn,
-    .modal-backdrop {
+    .modal-backdrop,
+    .meal-items {
         display: none !important;
     }
 
@@ -297,6 +298,16 @@ body.theme-dark .qty-badge {
         border-color: #999999 !important;
         box-shadow: none !important;
         border-radius: 0 !important;
+    }
+
+    .day-cell.current-day {
+        outline: none !important;
+        background: #ffffff !important;
+    }
+
+    .day-cell.current-day .day-num {
+        color: #000000 !important;
+        font-weight: bold !important;
     }
 
     .day-cell.adjacent-month {

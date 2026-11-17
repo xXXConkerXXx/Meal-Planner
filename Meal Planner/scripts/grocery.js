@@ -151,7 +151,18 @@ function renderGroceryList() {
     const parts = selectedWeek.split("-").map(Number);
     const start = new Date(parts.at(0), parts.at(1) - 1, parts.at(2));
     const totals = {};
-    let count = 0;
+    let dishCount = 0;
+
+    const addDishIngredients = dish => {
+        if (!dish) return;
+        dishCount++;
+        (dish.itemsList || []).forEach(line => {
+            const parsed = parseIngredientLine(line);
+            const key = `${parsed.name.toLowerCase()}|${parsed.unit}`;
+            if (!totals[key]) totals[key] = { name: parsed.name, unit: parsed.unit, qty: 0 };
+            totals[key].qty += parsed.qty;
+        });
+    };
 
     for (let i = 0; i < 7; i++) {
         const day = new Date(start);
@@ -160,21 +171,16 @@ function renderGroceryList() {
         if (!dayMeals) continue;
 
         ["breakfast", "lunch", "dinner"].forEach(slot => {
-            const meal = dayMeals[slot];
-            if (!meal) return;
-            count++;
-            (meal.itemsList || []).forEach(line => {
-                const parsed = parseIngredientLine(line);
-                const key = `${parsed.name.toLowerCase()}|${parsed.unit}`;
-                if (!totals[key]) totals[key] = { name: parsed.name, unit: parsed.unit, qty: 0 };
-                totals[key].qty += parsed.qty;
-            });
+            if (!dayMeals[slot]) return;
+            const plan = normalizePlanSlot(dayMeals[slot]);
+            addDishIngredients(plan.main);
+            plan.sides.forEach(side => addDishIngredients(side));
         });
     }
 
     const list = Object.values(totals);
     box.innerHTML = list.length
-        ? `<p><strong>Scheduled Meals This Week:</strong> ${count}</p><ul class="grocery-items">` +
+        ? `<p><strong>Scheduled Dishes This Week (Mains + Sides):</strong> ${dishCount}</p><ul class="grocery-items">` +
           list.map(i => {
               const badgeText = i.unit ? `${formatFraction(i.qty)} ${i.unit}` : formatFraction(i.qty);
               return `<li><input type="checkbox"><span><span class="qty-badge">${badgeText}</span> ${i.name}</span></li>`;
@@ -200,4 +206,3 @@ document.getElementById("theme-select").value = activeTheme;
 applyClasses();
 loadBackupData();
 refreshAllViews();
-document.getElementById("meal-form").reset()

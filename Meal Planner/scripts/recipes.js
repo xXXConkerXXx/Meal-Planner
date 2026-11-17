@@ -10,6 +10,10 @@ function getMealTypesList(meal) {
     return meal.type ? [meal.type] : [];
 }
 
+function isSideDish(meal) {
+    return meal && meal.role === "side";
+}
+
 document.getElementById("meal-form").addEventListener("submit", e => {
     e.preventDefault();
     const types = Array.from(document.querySelectorAll("#meal-type-checks input:checked")).map(cb => cb.value);
@@ -20,9 +24,12 @@ document.getElementById("meal-form").addEventListener("submit", e => {
 
     const lines = document.getElementById("meal-items").value.split(/\n/).map(l => l.trim()).filter(Boolean);
     const name = document.getElementById("meal-name").value.trim();
+    const role = document.getElementById("meal-role").value;
     const url = document.getElementById("meal-url").value.trim();
+
     const dishObj = {
         name: name,
+        role: role,
         url: url,
         itemsList: lines,
         items: lines.map(i => "• " + i).join("\n"),
@@ -35,7 +42,11 @@ document.getElementById("meal-form").addEventListener("submit", e => {
         meals.splice(editingMealIndex, 1, dishObj);
         Object.values(yearlyPlan).forEach(daySlots => {
             ["breakfast", "lunch", "dinner"].forEach(s => {
-                if (daySlots[s] && daySlots[s].name === oldName) daySlots[s] = dishObj;
+                if (!daySlots[s]) return;
+                const norm = normalizePlanSlot(daySlots[s]);
+                if (norm.main && norm.main.name === oldName) norm.main = dishObj;
+                norm.sides = norm.sides.map(side => side.name === oldName ? dishObj : side);
+                daySlots[s] = norm;
             });
         });
         cancelEditDish();
@@ -54,12 +65,14 @@ function startEditDish(i) {
     const dish = meals.at(i);
     if (!dish) return;
     editingMealIndex = i;
+    if (typeof closeSavedDishesModal === "function") closeSavedDishesModal();
 
     document.getElementById("form-heading").textContent = "1. Edit Dish";
     document.getElementById("save-dish-btn").textContent = "Update Dish";
     document.getElementById("cancel-edit-btn").classList.remove("hidden");
 
     document.getElementById("meal-name").value = dish.name;
+    document.getElementById("meal-role").value = dish.role || "main";
     document.getElementById("meal-url").value = dish.url || "";
     document.getElementById("meal-items").value = (dish.itemsList || []).join("\n");
 
@@ -71,6 +84,8 @@ function startEditDish(i) {
     document.querySelectorAll("#meal-season-checks input").forEach(cb => {
         cb.checked = dish.seasons.includes(cb.value);
     });
+
+    document.getElementById("form-heading").scrollIntoView({ behavior: "smooth" });
 }
 
 function cancelEditDish() {
@@ -100,23 +115,25 @@ function populateDayDropdown() {
 
 function updateAssignMealDropdown() {
     const slot = document.getElementById("assign-slot").value;
-    const filtered = meals.filter(m => mealSupportsSlot(m, slot));
+    const filtered = meals.filter(m => !isSideDish(m) && mealSupportsSlot(m, slot));
     document.getElementById("assign-meal").innerHTML = filtered.length
         ? filtered.map(m => `<option value="${meals.indexOf(m)}">${m.name}</option>`).join("")
-        : `<option value="">No ${slot} dishes saved</option>`;
+        : `<option value="">No ${slot} main dishes saved</option>`;
 }
 
 function applyMealPlacement() {
     const slot = document.getElementById("assign-slot").value;
     const idx = document.getElementById("assign-meal").value;
     const pattern = document.getElementById("assign-pattern").value;
-    if (idx === "") return showToast("Add a dish first!", true);
+    if (idx === "") return showToast("Add a main dish first!", true);
     const dish = meals.at(Number(idx));
 
     const setSlot = (y, m, d) => {
         const k = formatDateKey(y, m, d);
         if (!yearlyPlan[k]) yearlyPlan[k] = {};
-        yearlyPlan[k][slot] = dish;
+        const current = normalizePlanSlot(yearlyPlan[k][slot]);
+        current.main = dish;
+        yearlyPlan[k][slot] = current;
     };
 
     if (pattern === "single") {
@@ -152,26 +169,4 @@ function applyMealPlacement() {
 
     saveToDisk();
     showToast(`Placed "${dish.name}" on calendar!`);
-}
-
-function renderSavedMealsList() {
-    document.getElementById("recipe-count").textContent = meals.length;
-    document.getElementById("saved-meals-list").innerHTML = meals.map((m, i) => `
-        <li>
-            <span><strong>${m.name}</strong> (${getMealTypesList(m).join(", ")})</span>
-            <div class="saved-item-actions">
-                ${m.url ? `<a href="${m.url}" target="_blank" rel="noopener noreferrer" class="btn-edit" style="text-decoration: none;">Link ↗</a>` : ""}
-                <button type="button" class="btn-edit" onclick="startEditDish(${i})">Edit</button>
-                <button type="button" class="btn-delete" onclick="deleteMeal(${i})">Remove</button>
-            </div>
-        </li>`
-    ).join("");
-}
-
-function deleteMeal(i) {
-    if (editingMealIndex === i) cancelEditDish();
-    meals.splice(i, 1);
-    saveToDisk();
-    refreshAllViews();
-    showToast("Removed dish.");
 }

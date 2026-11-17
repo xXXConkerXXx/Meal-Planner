@@ -36,6 +36,7 @@ function changeMonth(delta) {
     viewMonth += delta;
     if (viewMonth > 11) { viewMonth = 0; viewYear++; }
     if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    if (typeof resetClearButtons === "function") resetClearButtons();
     refreshAllViews();
 }
 

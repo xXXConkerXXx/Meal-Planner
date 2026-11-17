@@ -4,17 +4,17 @@ const GUIDE_TABS = ["start", "recipes", "calendar", "grocery", "backup"];
 const GUIDE_CONTENT = {
     start: `
         <h3>1. Quick Start Overview</h3>
-        <p>Plan your family meals, generate weekly shopping lists, and display your menu on a kitchen monitor.</p>
+        <p>Plan your family meals, attach side dishes, generate weekly shopping lists, and display your menu on a kitchen monitor.</p>
         <ol style="padding-left: 20px;">
-            <li><strong>Add Dishes:</strong> Open <em>Edit &amp; Scatter Meals</em> to save dishes with ingredients, meal times, and seasons.</li>
-            <li><strong>Fill Calendar:</strong> Use <em>Auto-Fill This Month</em> for smart no-repeat menus or click any day cell directly.</li>
-            <li><strong>Shop Smarter:</strong> Open <em>Weekly Grocery List</em> to see combined ingredient totals for the week.</li>
+            <li><strong>Add Dishes:</strong> Open <em>Edit &amp; Scatter Meals</em> to save Main Dishes and Side Dishes with ingredients, optional recipe links, meal times, and seasons.</li>
+            <li><strong>Fill Calendar:</strong> Use <em>Auto-Fill This Month</em> for smart no-repeat menus or click any day cell to pick a Main Dish and Sides.</li>
+            <li><strong>View &amp; Shop:</strong> Click any day cell to view its full ingredients, or open <em>Weekly Grocery List</em> for automatic shopping math.</li>
             <li><strong>Display &amp; Save:</strong> Use <em>Kitchen Mode</em> for a counter screen and click <em>Save meals.json</em> for backups.</li>
         </ol>
     `,
     recipes: `
-        <h3>2. Supported Units &amp; Kitchen Meanings</h3>
-        <p>Format <strong>one ingredient per line</strong>: <code>Amount + Unit + Item</code> (e.g., <code>3 cloves garlic</code> or <code>1/2 tsp salt</code>).</p>
+        <h3>2. Main vs. Side Dishes &amp; Measuring Guide</h3>
+        <p>Choose <strong>Main Dish</strong> or <strong>Side Dish</strong>, add an optional recipe website link, and list <strong>one ingredient per line</strong>: <code>Amount + Unit + Item</code>.</p>
         <table style="width: 100%; border-collapse: collapse; font-size: 0.81rem; text-align: left; margin-bottom: 10px;">
             <tr style="border-bottom: 1px solid var(--border-color); color: var(--title-color);"><th style="padding: 4px;">Unit Type</th><th style="padding: 4px;">Recognized Words</th><th style="padding: 4px;">What It Means &amp; Equivalents</th></tr>
             <tr style="border-bottom: 1px solid var(--grid-line);">
@@ -46,18 +46,18 @@ const GUIDE_CONTENT = {
         <p style="font-size: 0.79rem; color: var(--text-muted); margin: 0;"><em>Tip: Leave out the unit for whole items (e.g., <code>8 chicken thighs</code>), and use consistent unit spellings across recipes so totals add together cleanly.</em></p>
     `,
     calendar: `
-        <h3>3. Calendar &amp; Scattering</h3>
+        <h3>3. Calendar, Sides &amp; Viewing Ingredients</h3>
         <ul style="padding-left: 20px;">
-            <li><strong>Meal Tabs:</strong> Switch between Breakfast (Orange), Lunch (Green), and Dinner (Purple).</li>
-            <li><strong>Click Any Day:</strong> Click directly on any calendar box to set, swap, or clear that day's meal.</li>
-            <li><strong>Smart Auto-Fill:</strong> Matches dishes to the active season and avoids repeating meals within 5 days or twice on the same day.</li>
-            <li><strong>Custom Placement:</strong> Schedule dishes on a single date, every chosen weekday, or once per week.</li>
+            <li><strong>Clean Calendar Boxes:</strong> Each day shows your Main Dish and attached Sides without cluttering the grid.</li>
+            <li><strong>Click Any Day Cell:</strong> Opens the day popup with a <strong>View Ingredients</strong> tab (showing every ingredient and recipe link) and an <strong>Edit Meal &amp; Sides</strong> tab to pair a Main Dish with multiple Sides.</li>
+            <li><strong>Smart Auto-Fill:</strong> Matches Main Dishes to the active season and avoids repeating meals within 5 days or twice on the same day.</li>
+            <li><strong>Custom Placement:</strong> Schedule Main Dishes on a single date, every chosen weekday, or once per week.</li>
         </ul>
     `,
     grocery: `
         <h3>4. Grocery List &amp; Kitchen Mode</h3>
         <ul style="padding-left: 20px;">
-            <li><strong>Weekly Math:</strong> Step through Sunday–Saturday weeks with <em>Prev/Next Week</em>; fractions and counts add up automatically.</li>
+            <li><strong>Combined Main + Side Math:</strong> Step through Sunday–Saturday weeks with <em>Prev/Next Week</em>; ingredients from every Main Dish and Side Dish add together automatically.</li>
             <li><strong>Clean Printing:</strong> Print your weekly checklist or print Breakfast, Lunch, and Dinner on 3 separate calendar pages.</li>
             <li><strong>Kitchen Mode:</strong> Expands the calendar edge-to-edge in fullscreen with larger fonts for a counter display.</li>
         </ul>

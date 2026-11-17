@@ -1,47 +1,15 @@
 let clearMonthArmed = false;
 let clearYearArmed = false;
 
-function autoScatterMonth() {
-    if (!meals.length) return showToast("Add dishes in Edit Mode first!", true);
-    fillMonth(viewYear, viewMonth);
-    saveToDisk();
-    refreshAllViews();
-    showToast("Auto-filled month with no close repeats!");
-}
-
-function autoScatterYear() {
-    if (!meals.length) return showToast("Add dishes in Edit Mode first!", true);
-    for (let m = 0; m < 12; m++) fillMonth(viewYear, m);
-    saveToDisk();
-    refreshAllViews();
-    showToast(`Scattered seasonal meals across ${viewYear}!`);
-}
-
-function fillMonth(y, m) {
-    const season = getSeason(m);
-    const days = new Date(y, m + 1, 0).getDate();
-    const recentByType = { breakfast: [], lunch: [], dinner: [] };
-
-    for (let d = 1; d <= days; d++) {
-        const k = formatDateKey(y, m, d);
-        if (!yearlyPlan[k]) yearlyPlan[k] = {};
-        const usedToday = [];
-
-        ["breakfast", "lunch", "dinner"].forEach(type => {
-            const pool = meals.filter(item => mealSupportsSlot(item, type) && item.seasons.includes(season));
-            if (!pool.length) return;
-
-            const freshPool = pool.filter(item => !recentByType[type].includes(item.name) && !usedToday.includes(item.name));
-            const noRepeatPool = pool.filter(item => !recentByType[type].includes(item.name));
-            const activePool = freshPool.length ? freshPool : (noRepeatPool.length ? noRepeatPool : pool);
-            const chosen = activePool.at(Math.floor(Math.random() * activePool.length));
-
-            yearlyPlan[k][type] = chosen;
-            usedToday.push(chosen.name);
-            recentByType[type].push(chosen.name);
-            if (recentByType[type].length > 5) recentByType[type].shift();
-        });
-    }
+function resetClearButtons() {
+    clearMonthArmed = false;
+    clearYearArmed = false;
+    document.querySelectorAll(".btn-danger-confirm").forEach(btn => {
+        btn.classList.remove("btn-danger-confirm");
+        if (btn.textContent.includes("Clear ")) {
+            btn.textContent = btn.textContent.includes("20") ? "Clear Year" : "Clear Month";
+        }
+    });
 }
 
 function clearCurrentMonth(btn) {
@@ -96,11 +64,18 @@ function buildMonthGridHTML(slot, clickable = false) {
         const isToday = key === todayKey ? " current-day" : "";
         const adjClass = isAdj ? " adjacent-month" : "";
         const clickAttr = clickable ? ` onclick="openCellModal('${key}')"` : "";
-        const meal = yearlyPlan[key]?.[slot];
-        const linkHTML = (meal && meal.url && clickable)
-            ? `<div style="margin-top: 4px;"><a href="${meal.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="font-size: 0.75rem; color: var(--mode-color); font-weight: bold;">Recipe ↗</a></div>`
-            : "";
-        return `<div class="day-cell${adjClass}${isToday}"${clickAttr}><div class="day-num">${d}</div>${meal ? `<div class="meal-title">${meal.name}</div><div class="meal-items">${meal.items}</div>${linkHTML}` : ""}</div>`;
+        const plan = normalizePlanSlot(yearlyPlan[key]?.[slot]);
+
+        let bodyHTML = "";
+        if (plan.main) {
+            bodyHTML += `<div class="meal-title">${plan.main.name}</div>`;
+        }
+        if (plan.sides.length) {
+            const sidesText = plan.sides.map(s => `+ ${s.name}`).join("\n");
+            bodyHTML += `<div class="meal-items">${sidesText}</div>`;
+        }
+
+        return `<div class="day-cell${adjClass}${isToday}"${clickAttr}><div class="day-num">${d}</div>${bodyHTML}</div>`;
     };
 
     let html = "";

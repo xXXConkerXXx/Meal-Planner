@@ -5,16 +5,20 @@ h2 { margin: 0 0 12px 0; color: var(--title-color); font-size: 1.25rem; border-b
 h3 { margin: 0 0 10px 0; font-size: 1rem; color: var(--text-muted); }
 
 .nav-arrow { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 6px; }
-.header-controls { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
-#season-badge { background: #8b261d; color: #fff; padding: 5px 12px; border-radius: 12px; font-size: 0.85rem; text-transform: uppercase; }
-#theme-select { padding: 5px 10px; font-size: 0.85rem; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 12px; cursor: pointer; }
+.header-controls { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.control-divider { width: 1px; height: 22px; background: var(--border-color); margin: 0 2px; }
+#season-badge { background: #8b261d; color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+#theme-select { padding: 6px 10px; font-size: 0.85rem; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-family: inherit; }
 
 .view-switcher { display: inline-flex; background: var(--bg-tab); padding: 4px; border-radius: 8px; gap: 4px; flex-wrap: wrap; justify-content: center; }
 .view-btn { background: transparent; color: var(--text-main); padding: 8px 18px; border-radius: 6px; }
 .view-btn.active { background: #8b261d; color: #fff; }
 
-.preview-toolbar, .calendar-wrapper, .tabs, .edit-grid, .grocery-panel { max-width: 1100px; margin: 0 auto 15px auto; }
-.preview-toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.calendar-bar, .calendar-wrapper, .edit-grid, .grocery-panel { max-width: 1100px; margin: 0 auto 15px auto; }
+.calendar-bar { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; margin-bottom: 0; }
+.calendar-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 6px; }
+.calendar-actions button { padding: 7px 12px; font-size: 0.85rem; }
+
 .edit-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; align-items: start; }
 @media (max-width: 850px) { .edit-grid { grid-template-columns: 1fr; } }
 
@@ -32,15 +36,15 @@ h3 { margin: 0 0 10px 0; font-size: 1rem; color: var(--text-muted); }
 .checks { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.9rem; padding-top: 6px; }
 .checks label { font-weight: normal; margin: 0; }
 
-button { background: #8b261d; color: #fff; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; }
+button { background: #8b261d; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; font-size: 0.88rem; }
 .btn-full { width: 100%; padding: 12px; font-size: 1rem; }
 .btn-green { background: #2e5a36; }
 .btn-outline { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); }
 .btn-danger-confirm { background: #8b261d !important; color: #fff !important; border-color: #8b261d !important; }
 
 body.kiosk-active { padding: 10px 16px; }
-body.kiosk-active .header-controls, body.kiosk-active .view-switcher, body.kiosk-active .preview-toolbar { display: none !important; }
-body.kiosk-active .calendar-wrapper, body.kiosk-active .tabs { max-width: 100%; }
+body.kiosk-active .header-controls, body.kiosk-active .view-switcher, body.kiosk-active .calendar-actions { display: none !important; }
+body.kiosk-active .calendar-wrapper, body.kiosk-active .calendar-bar { max-width: 100%; }
 body.kiosk-active .day-cell { min-height: 135px; }
 body.kiosk-active .meal-title { font-size: 1.05rem; }
 body.kiosk-active .meal-items { font-size: 0.88rem; }
