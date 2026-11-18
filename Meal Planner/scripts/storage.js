@@ -38,9 +38,13 @@ function normalizePlanSlot(entry) {
     return { main: entry, sides: [] };
 }
 
+function getBackupPayload() {
+    const holidayRepeats = window.HolidayRepeatStore ? window.HolidayRepeatStore.getAll() : [];
+    return JSON.stringify({ recipes: meals, yearlyPlan: yearlyPlan, holidayRepeats: holidayRepeats }, null, 2);
+}
+
 function saveToDisk() {
-    const payload = JSON.stringify({ recipes: meals, yearlyPlan: yearlyPlan }, null, 2);
-    localStorage.setItem("meal_planner_backup", payload);
+    localStorage.setItem("meal_planner_backup", getBackupPayload());
 }
 
 function loadBackupData() {
@@ -62,8 +66,14 @@ function importFromFile(event) {
             const data = JSON.parse(e.target.result || "{}");
             meals = Array.isArray(data) ? data : (data.recipes || []);
             yearlyPlan = data.yearlyPlan || {};
+            if (window.HolidayRepeatStore && Array.isArray(data.holidayRepeats)) {
+                window.HolidayRepeatStore.replaceAll(data.holidayRepeats);
+            }
             saveToDisk();
             refreshAllViews();
+            const patternSel = document.getElementById("assign-pattern");
+            const card = patternSel ? (patternSel.closest(".panel") || patternSel.parentElement.parentElement) : null;
+            if (window.HolidayRepeatList && card) window.HolidayRepeatList.render(card);
             showToast("Loaded " + file.name);
         } catch (err) {
             showToast("Invalid JSON file.", true);
@@ -74,8 +84,7 @@ function importFromFile(event) {
 }
 
 function exportToFile() {
-    const payload = JSON.stringify({ recipes: meals, yearlyPlan: yearlyPlan }, null, 2);
-    const blob = new Blob([payload], { type: "application/json" });
+    const blob = new Blob([getBackupPayload()], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "meals.json";

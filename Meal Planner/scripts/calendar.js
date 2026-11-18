@@ -1,12 +1,15 @@
 let clearMonthArmed = false;
 let clearYearArmed = false;
+let clearAllArmed = false;
 
 function resetClearButtons() {
     clearMonthArmed = false;
     clearYearArmed = false;
+    clearAllArmed = false;
     document.querySelectorAll(".btn-danger-confirm").forEach(btn => {
         btn.classList.remove("btn-danger-confirm");
-        if (btn.textContent.includes("Clear ")) {
+        if (btn.textContent.includes("Clear All")) btn.textContent = "Clear All";
+        else if (btn.textContent.includes("Clear ")) {
             btn.textContent = btn.textContent.includes("20") ? "Clear Year" : "Clear Month";
         }
     });
@@ -46,6 +49,23 @@ function clearCurrentYear(btn) {
     saveToDisk();
     refreshAllViews();
     showToast(`Cleared all of ${viewYear}.`);
+}
+
+function clearAllPlans(btn) {
+    if (!clearAllArmed) {
+        clearAllArmed = true;
+        btn.textContent = "Confirm Clear All?";
+        btn.classList.add("btn-danger-confirm");
+        setTimeout(() => { clearAllArmed = false; btn.textContent = "Clear All"; btn.classList.remove("btn-danger-confirm"); }, 4000);
+        return;
+    }
+    clearAllArmed = false;
+    btn.textContent = "Clear All";
+    btn.classList.remove("btn-danger-confirm");
+    yearlyPlan = {};
+    saveToDisk();
+    refreshAllViews();
+    showToast("Cleared entire calendar.");
 }
 
 function buildMonthGridHTML(slot, clickable = false) {

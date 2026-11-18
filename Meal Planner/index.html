@@ -50,7 +50,8 @@
 
             <div class="calendar-actions">
                 <button type="button" onclick="clearCurrentMonth(this)" class="btn-outline">Clear Month</button>
-                <button type="button" onclick="clearCurrentYear(this)" class="btn-outline">Clear Year</button>
+				<button type="button" class="btn-outline" onclick="clearCurrentYear(this)">Clear Year</button>
+				<button type="button" class="btn-outline" onclick="clearAllPlans(this)">Clear All</button>
                 <button type="button" onclick="printAllCalendars()" class="btn-outline">Print All 3 Calendars</button>
             </div>
         </div>
@@ -182,18 +183,35 @@
 
     <script src="scripts/storage.js"></script>
     <script src="scripts/ui.js"></script>
-    <script src="scripts/recipes.js"></script>
+	<script src="scripts/recipes.js"></script>
+    <script src="scripts/dict-dishes.js"></script>
+    <script src="scripts/dict-ingredients.js"></script>
+    <script src="scripts/recipe-dictionary.js"></script>
+    <script src="scripts/recipe-fuzzy-match.js"></script>
+    <script src="scripts/recipe-autocomplete.js"></script>
     <script src="scripts/saved-modal.js"></script>
+    <script src="scripts/pantry-matcher.js"></script>
     <script src="scripts/calendar.js"></script>
+    <script src="scripts/modal-extras.js"></script>
     <script src="scripts/modal.js"></script>
     <script src="scripts/guide.js"></script>
+    <script src="scripts/grocery-aisles.js"></script>
     <script src="scripts/grocery.js"></script>
 	
-	<script src="scripts/holidays/holiday-display.js"></script>
+	<script src="scripts/holidays/holiday-rules.js"></script>
+    <script src="scripts/holidays/holiday-repeat-store.js"></script>
+    <script src="scripts/holidays/assign-sides-picker.js"></script>
+    <script src="scripts/holidays/holiday-repeat-list.js"></script>
+    <script src="scripts/holidays/holiday-meals.js"></script>
+
+    <script src="scripts/holidays/holiday-display.js"></script>
     <script src="scripts/holidays/favicon-live.js"></script>
     <script src="scripts/holidays/audio-notes.js"></script>
     <script src="scripts/holidays/audio-songs-h1.js"></script>
     <script src="scripts/holidays/audio-songs-h2.js"></script>
+    <script src="scripts/holidays/audio-songs-extra-h1.js"></script>
+    <script src="scripts/holidays/audio-songs-extra-q3.js"></script>
+    <script src="scripts/holidays/audio-songs-extra-q4.js"></script>
     <script src="scripts/holidays/audio-instruments.js"></script>
     <script src="scripts/holidays/audio-arranger.js"></script>
     <script src="scripts/holidays/audio-engine.js"></script>
@@ -207,6 +225,10 @@
     <script src="scripts/decorations/3d-physics.js"></script>
 	<script src="scripts/decorations/3d-scene.js"></script>
     <script src="scripts/decorations/3d-firework-audio.js"></script>
+    <script src="scripts/decorations/3d-countdown-targets.js"></script>
+    <script src="scripts/decorations/3d-firework-particles.js"></script>
+    <script src="scripts/decorations/3d-clock-widget.js"></script>
     <script src="scripts/decorations/3d-countdown.js"></script>
+    <script src="scripts/decorations/3d-showcase-mode.js"></script>
 </body>
 </html>

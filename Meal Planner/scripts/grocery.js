@@ -179,6 +179,11 @@ function renderGroceryList() {
     }
 
     const list = Object.values(totals);
+    if (window.GroceryAisleSorter) {
+        box.innerHTML = window.GroceryAisleSorter.renderGroupedHTML(list, dishCount);
+        return;
+    }
+
     box.innerHTML = list.length
         ? `<p><strong>Scheduled Dishes This Week (Mains + Sides):</strong> ${dishCount}</p><ul class="grocery-items">` +
           list.map(i => {

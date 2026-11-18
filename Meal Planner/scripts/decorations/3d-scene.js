@@ -4,7 +4,7 @@
         Array.of("heart"),
         Array.of("clover", "flower"),
         Array.of("egg", "flower"),
-        Array.of("flower", "heart"),
+        Array.of("flower", "star"),
         Array.of("sun", "star"),
         Array.of("firework", "sun"),
         Array.of("sun", "flower"),
@@ -14,7 +14,78 @@
         Array.of("tree", "snowflake")
     );
 
-    let gl, prog, objs = [], activeKey = "";
+    const TARGET_FPS_MS = 1000 / 32;
+    const POOL_SIZE = 8;
+
+    let gl, prog, locs = {}, activeKey = "", lastFrameTime = 0;
+    const meshPool = {};
+    const objPool = [];
+
+    function makeBuf(data) {
+        const b = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, b);
+        gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+        return b;
+    }
+
+    function getPooledMesh(kind) {
+        if (meshPool[kind]) return meshPool[kind];
+        try {
+            const geo = createHoliday3DModel(kind);
+            if (!geo || !geo.count) return null;
+            meshPool[kind] = {
+                pBuf: makeBuf(geo.pos),
+                nBuf: makeBuf(geo.norm),
+                cBuf: makeBuf(geo.col),
+                count: geo.count
+            };
+            return meshPool[kind];
+        } catch (err) {
+            console.error(`3D model error for "${kind}":`, err);
+            return null;
+        }
+    }
+
+    function ensureObjectPool() {
+        if (objPool.length) return;
+        for (let i = 0; i < POOL_SIZE; i++) {
+            objPool.push({
+                mesh: null, scale: 1,
+                x: 0, y: 0, z: 0,
+                vx: 0, vy: 0,
+                rx: 0, ry: 0, rz: 0,
+                vrx: 0, vry: 0, vrz: 0
+            });
+        }
+    }
+
+    function assignPoolForMonth(poolKinds) {
+        ensureObjectPool();
+        const aspect = gl.canvas.width / (gl.canvas.height || 1);
+        const halfH = 14.0 / 1.8, halfW = halfH * aspect;
+
+        for (let i = 0; i < POOL_SIZE; i++) {
+            const kind = poolKinds.at(i % poolKinds.length);
+            const o = objPool.at(i);
+            o.mesh = getPooledMesh(kind);
+            o.scale = Math.random() * 0.65 + 0.92;
+
+            const speed = Math.random() * 0.018 + 0.010;
+            const ang = Math.random() * Math.PI * 2;
+            o.x = (Math.random() * 2 - 1) * (halfW + 1);
+            o.y = (Math.random() * 2 - 1) * (halfH + 1);
+            o.z = (Math.random() * 2 - 1) * 1.0;
+            o.vx = Math.cos(ang) * speed;
+            o.vy = Math.sin(ang) * speed;
+
+            o.rx = Math.random() * 6.28;
+            o.ry = Math.random() * 6.28;
+            o.rz = Math.random() * 6.28;
+            o.vrx = (Math.random() - 0.5) * 0.020;
+            o.vry = (Math.random() - 0.5) * 0.022;
+            o.vrz = (Math.random() - 0.5) * 0.012;
+        }
+    }
 
     function readCalendarContext() {
         const h1 = document.querySelector("h1");
@@ -37,74 +108,55 @@
         return { key: `${mIdx}:${pool.join(",")}`, pool };
     }
 
-    function spawn(pool) {
-        objs.forEach(o => { gl.deleteBuffer(o.pBuf); gl.deleteBuffer(o.nBuf); gl.deleteBuffer(o.cBuf); });
-        objs = [];
-
-        const aspect = gl.canvas.width / (gl.canvas.height || 1);
-        const halfH = 14.0 / 1.8, halfW = halfH * aspect;
-        const makeBuf = data => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); return b; };
-
-        for (let i = 0; i < 12; i++) {
-            const kind = pool.at(i % pool.length);
-            let geo;
-            try {
-                geo = createHoliday3DModel(kind);
-            } catch (err) {
-                console.error(`3D model error for "${kind}":`, err);
-                continue;
-            }
-            if (!geo || !geo.count) continue;
-
-            const scale = Math.random() * 0.70 + 0.90;
-            const speed = Math.random() * 0.014 + 0.007;
-            const ang = Math.random() * Math.PI * 2;
-            objs.push({
-                pBuf: makeBuf(geo.pos), nBuf: makeBuf(geo.norm), cBuf: makeBuf(geo.col), count: geo.count,
-                scale, x: (Math.random() * 2 - 1) * (halfW + 1), y: (Math.random() * 2 - 1) * (halfH + 1), z: (Math.random() * 2 - 1) * 1.0,
-                vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed,
-                rx: Math.random() * 6.28, ry: Math.random() * 6.28, rz: Math.random() * 6.28,
-                vrx: (Math.random() - 0.5) * 0.014, vry: (Math.random() - 0.5) * 0.016, vrz: (Math.random() - 0.5) * 0.009
-            });
-        }
-    }
-
-    function tick() {
+    function tick(now) {
         requestAnimationFrame(tick);
+        if (document.hidden) return;
+        if (now - lastFrameTime < TARGET_FPS_MS) return;
+        lastFrameTime = now;
+
         const { key, pool } = readCalendarContext();
-        if (key !== activeKey) { activeKey = key; spawn(pool); }
+        if (key !== activeKey) {
+            activeKey = key;
+            assignPoolForMonth(pool);
+        }
 
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         const aspect = gl.canvas.width / (gl.canvas.height || 1);
         const halfH = 14.0 / 1.8, halfW = halfH * aspect;
-        stepHoliday3DPhysics(objs, halfW, halfH);
+        stepHoliday3DPhysics(objPool, halfW, halfH);
 
-        const uTrans = gl.getUniformLocation(prog, "uTrans");
-        const uRot = gl.getUniformLocation(prog, "uRot");
-        const uScale = gl.getUniformLocation(prog, "uScale");
-        const uAspect = gl.getUniformLocation(prog, "uAspect");
-        const aPos = gl.getAttribLocation(prog, "aPos");
-        const aNorm = gl.getAttribLocation(prog, "aNorm");
-        const aCol = gl.getAttribLocation(prog, "aCol");
+        gl.uniform1f(locs.uAspect, aspect);
+        let boundMesh = null;
 
-        gl.uniform1f(uAspect, aspect);
-        objs.forEach(o => {
-            gl.uniform3f(uTrans, o.x, o.y, o.z);
-            gl.uniform3f(uRot, o.rx, o.ry, o.rz);
-            gl.uniform1f(uScale, o.scale);
+        for (let i = 0; i < objPool.length; i++) {
+            const o = objPool.at(i);
+            const m = o.mesh;
+            if (!m) continue;
 
-            gl.bindBuffer(gl.ARRAY_BUFFER, o.pBuf); gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, 0, 0);
-            gl.bindBuffer(gl.ARRAY_BUFFER, o.nBuf); gl.enableVertexAttribArray(aNorm); gl.vertexAttribPointer(aNorm, 3, gl.FLOAT, false, 0, 0);
-            gl.bindBuffer(gl.ARRAY_BUFFER, o.cBuf); gl.enableVertexAttribArray(aCol); gl.vertexAttribPointer(aCol, 3, gl.FLOAT, false, 0, 0);
-            gl.drawArrays(gl.TRIANGLES, 0, o.count);
-        });
+            gl.uniform3f(locs.uTrans, o.x, o.y, o.z);
+            gl.uniform3f(locs.uRot, o.rx, o.ry, o.rz);
+            gl.uniform1f(locs.uScale, o.scale);
+
+            if (boundMesh !== m) {
+                boundMesh = m;
+                gl.bindBuffer(gl.ARRAY_BUFFER, m.pBuf);
+                gl.vertexAttribPointer(locs.aPos, 3, gl.FLOAT, false, 0, 0);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, m.nBuf);
+                gl.vertexAttribPointer(locs.aNorm, 3, gl.FLOAT, false, 0, 0);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, m.cBuf);
+                gl.vertexAttribPointer(locs.aCol, 3, gl.FLOAT, false, 0, 0);
+            }
+
+            gl.drawArrays(gl.TRIANGLES, 0, m.count);
+        }
     }
 
     function init() {
-        if (typeof createHoliday3DModel !== "function") { console.error("Missing createHoliday3DModel (check 3d-models.js)"); return; }
-        if (typeof stepHoliday3DPhysics !== "function") { console.error("Missing stepHoliday3DPhysics (check 3d-physics.js)"); return; }
+        if (typeof createHoliday3DModel !== "function" || typeof stepHoliday3DPhysics !== "function") return;
 
         const layer = document.createElement("div");
         layer.id = "holiday-3d-overlay";
@@ -151,11 +203,35 @@
         gl.linkProgram(prog);
         gl.useProgram(prog);
         gl.enable(gl.DEPTH_TEST);
+        gl.disable(gl.CULL_FACE);
+        gl.disable(gl.BLEND);
 
-        const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; gl.viewport(0, 0, canvas.width, canvas.height); };
+        locs = {
+            uTrans: gl.getUniformLocation(prog, "uTrans"),
+            uRot: gl.getUniformLocation(prog, "uRot"),
+            uScale: gl.getUniformLocation(prog, "uScale"),
+            uAspect: gl.getUniformLocation(prog, "uAspect"),
+            aPos: gl.getAttribLocation(prog, "aPos"),
+            aNorm: gl.getAttribLocation(prog, "aNorm"),
+            aCol: gl.getAttribLocation(prog, "aCol")
+        };
+        gl.enableVertexAttribArray(locs.aPos);
+        gl.enableVertexAttribArray(locs.aNorm);
+        gl.enableVertexAttribArray(locs.aCol);
+
+        let resizeTimer = null;
+        const resize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        };
         resize();
-        window.addEventListener("resize", resize);
-        tick();
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resize, 120);
+        });
+
+        requestAnimationFrame(tick);
     }
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

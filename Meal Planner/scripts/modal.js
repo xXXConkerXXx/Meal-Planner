@@ -53,6 +53,7 @@ function ensureCellModal() {
 
 function openCellModal(dateKey) {
     ensureCellModal();
+    if (window.ModalExtras) window.ModalExtras.resetScale();
     modalDateKey = dateKey;
     const parts = dateKey.split("-").map(Number);
     const dateObj = new Date(parts.at(0), parts.at(1) - 1, parts.at(2));
@@ -89,15 +90,19 @@ function renderModalIngredientsView() {
         return;
     }
 
+    const scale = window.ModalExtras ? window.ModalExtras.getScale() : 1;
+    const formatLine = line => window.ModalExtras ? window.ModalExtras.scaleIngredientLine(line, scale) : line;
+
     const renderDishSection = (dish, label) => {
         const link = dish.url ? ` <a href="${dish.url}" target="_blank" rel="noopener noreferrer" style="font-size: 0.82rem; color: var(--mode-color); font-weight: bold;">Recipe ↗</a>` : "";
-        const items = (dish.itemsList || []).map(i => `<li>${i}</li>`).join("");
+        const items = (dish.itemsList || []).map(i => `<li>${formatLine(i)}</li>`).join("");
         return `<div style="margin-bottom: 12px;"><div style="font-weight: bold; color: var(--mode-color);">${label}: ${dish.name}${link}</div><ul style="margin: 4px 0 0 0; padding-left: 20px;">${items}</ul></div>`;
     };
 
     let html = "";
     if (plan.main) html += renderDishSection(plan.main, "Main");
     plan.sides.forEach(side => { html += renderDishSection(side, "Side"); });
+    if (window.ModalExtras) html += window.ModalExtras.renderControlsHTML(true);
     box.innerHTML = html;
 }
 

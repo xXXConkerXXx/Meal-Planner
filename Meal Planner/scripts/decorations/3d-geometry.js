@@ -22,7 +22,7 @@ function createSmoothMeshBuilder() {
         pushTri(p1, p3, p4, color, n1, n3, n4);
     };
 
-    const addLathe = (profFn, colFn, segs = 64, stacks = 40) => {
+    const addLathe = (profFn, colFn, segs = 48, stacks = 32) => {
         const g = [];
         for (let i = 0; i <= stacks; i++) {
             const row = [], v = i / stacks;
@@ -52,8 +52,8 @@ function createSmoothMeshBuilder() {
         }
     };
 
-    const addEllipsoid = (cx, cy, cz, rx, ry, rz, color, segs = 32) => {
-        const st = Math.max(16, Math.floor(segs * 0.75));
+    const addEllipsoid = (cx, cy, cz, rx, ry, rz, color, segs = 26) => {
+        const st = Math.max(14, Math.floor(segs * 0.75));
         const vert = (i, j) => {
             const p = (i / st) * Math.PI, t = (j / segs) * Math.PI * 2;
             const dx = Math.sin(p) * Math.cos(t), dy = Math.cos(p), dz = Math.sin(p) * Math.sin(t);
@@ -66,7 +66,7 @@ function createSmoothMeshBuilder() {
         }
     };
 
-    const addTube = (pts, rads, color, segs = 20) => {
+    const addTube = (pts, rads, color, segs = 16) => {
         const rings = [], nRings = [];
         pts.forEach((p, idx) => {
             const prev = pts.at(Math.max(0, idx - 1)), next = pts.at(Math.min(pts.length - 1, idx + 1));
@@ -93,7 +93,7 @@ function createSmoothMeshBuilder() {
     };
 
     const addPillow = (pts2D, depth, color, cx = 0, cy = 0, cz = 0) => {
-        const n = pts2D.length, rings = 6;
+        const n = pts2D.length, rings = 8;
         for (let r = 0; r < rings; r++) {
             const f1 = r / rings, f2 = (r + 1) / rings;
             const z1 = depth * Math.sqrt(Math.max(0, 1 - f1 * f1)), z2 = depth * Math.sqrt(Math.max(0, 1 - f2 * f2));
@@ -104,10 +104,11 @@ function createSmoothMeshBuilder() {
                 const p3 = Array.of(cx + b.at(0) * f2, cy + b.at(1) * f2, cz + z2);
                 const p4 = Array.of(cx + b.at(0) * f1, cy + b.at(1) * f1, cz + z1);
 
+                // Smoothly taper Z normal to 0 at f = 1 so front & back domes meet seamlessly with zero edge crease
                 const nf = (pt, f) => {
-                    const lx = (pt.at(0) - cx) * f * 0.65;
-                    const ly = (pt.at(1) - cy) * f * 0.65;
-                    const lz = Math.max(0.35, 1.0 - f * 0.55);
+                    const lx = (pt.at(0) - cx) * (0.4 + 0.8 * f);
+                    const ly = (pt.at(1) - cy) * (0.4 + 0.8 * f);
+                    const lz = Math.max(0, 1.0 - f * f);
                     const l = Math.hypot(lx, ly, lz) || 1;
                     return Array.of(lx / l, ly / l, lz / l);
                 };
@@ -125,5 +126,13 @@ function createSmoothMeshBuilder() {
         }
     };
 
-    return { addLathe, addEllipsoid, addTube, addPillow, build: () => ({ pos: new Float32Array(pos), norm: new Float32Array(norm), col: new Float32Array(col), count: pos.length / 3 }) };
+    return {
+        pushTri,
+        pushQuad,
+        addLathe,
+        addEllipsoid,
+        addTube,
+        addPillow,
+        build: () => ({ pos: new Float32Array(pos), norm: new Float32Array(norm), col: new Float32Array(col), count: pos.length / 3 })
+    };
 }

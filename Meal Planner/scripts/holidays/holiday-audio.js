@@ -1,17 +1,61 @@
 (function () {
+    const MONTH_NAMES = Array.of("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December");
+
+    function populateSongOptions(selectEl) {
+        if (!selectEl) return;
+        const songs = window.HOLIDAY_SONGS || [];
+        if (selectEl.dataset.songCount === String(songs.length) && songs.length > 0) return;
+
+        const byMonth = Array.from({ length: 12 }, () => []);
+        songs.forEach((s, idx) => {
+            const mIdx = window.HolidayAudioEngine?.getSongMonth ? window.HolidayAudioEngine.getSongMonth(s, idx) : (idx % 12);
+            if (byMonth.at(mIdx)) byMonth.at(mIdx).push({ song: s, idx });
+        });
+
+        selectEl.innerHTML = byMonth.map((entries, mIdx) => {
+            if (!entries.length) return "";
+            const opts = entries.map(({ song, idx }) => `<option value="${idx}">${song.name}</option>`).join("");
+            return `<optgroup label="${MONTH_NAMES.at(mIdx)}">${opts}</optgroup>`;
+        }).join("");
+
+        selectEl.dataset.songCount = String(songs.length);
+    }
+
     function syncUI() {
         if (!window.HolidayAudioEngine) return;
-        const { playing, song, volume } = window.HolidayAudioEngine.getState();
-        const titleEl = document.getElementById("holiday-audio-title");
+        const { playing, waitingForClick, song, activeIdx, shuffleAll, loopSingle, isOverridden, volume } = window.HolidayAudioEngine.getState();
+        const selectEl = document.getElementById("holiday-song-select");
         const ensEl = document.getElementById("holiday-audio-ensemble");
         const btnEl = document.getElementById("holiday-audio-btn");
+        const loopEl = document.getElementById("holiday-loop-btn");
+        const shufEl = document.getElementById("holiday-shuffle-btn");
+        const resetEl = document.getElementById("holiday-reset-month-btn");
         const volIcon = document.getElementById("holiday-vol-icon");
         const volSlider = document.getElementById("holiday-vol-slider");
         const volPct = document.getElementById("holiday-vol-pct");
 
-        if (titleEl) titleEl.textContent = song.name;
+        if (selectEl) {
+            populateSongOptions(selectEl);
+            if (document.activeElement !== selectEl) {
+                selectEl.value = String(activeIdx);
+            }
+        }
         if (ensEl) ensEl.textContent = `• ${song.ensemble}`;
-        if (btnEl) btnEl.textContent = playing ? "⏸ Pause" : "▶ Play";
+        if (btnEl) {
+            btnEl.textContent = waitingForClick ? "🔊 Click to Start" : (playing ? "⏸ Pause" : "▶ Play");
+        }
+        if (loopEl) {
+            loopEl.className = loopSingle ? "btn-green" : "btn-outline";
+            loopEl.title = loopSingle ? "Repeat Current Song: ON" : "Repeat Current Song: OFF";
+        }
+        if (shufEl) {
+            shufEl.className = shuffleAll ? "btn-green" : "btn-outline";
+            shufEl.title = shuffleAll ? "Shuffle All Months: ON" : "Shuffle All Months: OFF";
+        }
+        if (resetEl) {
+            resetEl.className = isOverridden ? "btn-green" : "btn-outline";
+            resetEl.style.opacity = isOverridden ? "1" : "0.75";
+        }
 
         const pct = Math.round(volume * 100);
         if (volIcon) volIcon.textContent = pct === 0 ? "🔇" : (pct < 45 ? "🔉" : "🔊");
@@ -44,9 +88,13 @@
         `;
 
         pill.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <button type="button" id="holiday-audio-btn" style="padding: 4px 12px; font-size: 0.78rem; border-radius: 6px;">⏸ Pause</button>
-                <span id="holiday-audio-title" style="font-weight: bold; color: var(--text-main);"></span>
+            <div style="display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
+                <button type="button" id="holiday-audio-btn" style="padding: 4px 12px; font-size: 0.78rem; border-radius: 6px;">🔊 Click to Start</button>
+                <button type="button" id="holiday-next-btn" title="Next Song" style="padding: 4px 9px; font-size: 0.78rem; border-radius: 6px;">⏭</button>
+                <button type="button" id="holiday-loop-btn" class="btn-outline" title="Repeat Current Song" style="padding: 4px 9px; font-size: 0.78rem; border-radius: 6px;">🔂</button>
+                <button type="button" id="holiday-shuffle-btn" class="btn-outline" title="Shuffle All Months" style="padding: 4px 9px; font-size: 0.78rem; border-radius: 6px;">🔀</button>
+                <button type="button" id="holiday-reset-month-btn" class="btn-outline" title="Reset Music to Active Calendar Month" style="padding: 4px 9px; font-size: 0.78rem; border-radius: 6px;">📅</button>
+                <select id="holiday-song-select" title="Choose Song (Plays that month's playlist)" style="padding: 4px 8px; font-size: 0.80rem; font-weight: bold; border-radius: 6px; background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-color); font-family: inherit; cursor: pointer;"></select>
                 <span id="holiday-audio-ensemble" style="font-style: italic; color: var(--text-muted); font-size: 0.78rem;"></span>
             </div>
             <div style="display: flex; align-items: center; gap: 7px;">
@@ -61,13 +109,44 @@
         else document.body.appendChild(pill);
 
         window.HolidayAudioEngine.setListener(syncUI);
-        pill.querySelector("#holiday-audio-btn").addEventListener("click", () => window.HolidayAudioEngine.togglePlay());
+        pill.querySelector("#holiday-audio-btn").addEventListener("click", () => {
+            const { waitingForClick } = window.HolidayAudioEngine.getState();
+            if (waitingForClick) {
+                window.HolidayAudioEngine.unlockOnGesture();
+                syncUI();
+            } else {
+                window.HolidayAudioEngine.togglePlay();
+            }
+        });
+        pill.querySelector("#holiday-next-btn").addEventListener("click", () => {
+            window.HolidayAudioEngine.unlockOnGesture();
+            window.HolidayAudioEngine.nextSong();
+        });
+        pill.querySelector("#holiday-loop-btn").addEventListener("click", () => {
+            window.HolidayAudioEngine.unlockOnGesture();
+            window.HolidayAudioEngine.toggleLoopSingle();
+        });
+        pill.querySelector("#holiday-shuffle-btn").addEventListener("click", () => {
+            window.HolidayAudioEngine.unlockOnGesture();
+            window.HolidayAudioEngine.toggleShuffle();
+        });
+        pill.querySelector("#holiday-reset-month-btn").addEventListener("click", () => {
+            window.HolidayAudioEngine.unlockOnGesture();
+            window.HolidayAudioEngine.resetToCalendarMonth();
+        });
+        pill.querySelector("#holiday-song-select").addEventListener("change", e => {
+            window.HolidayAudioEngine.unlockOnGesture();
+            window.HolidayAudioEngine.setSongIndex(Number(e.target.value));
+        });
         pill.querySelector("#holiday-vol-slider").addEventListener("input", e => {
             window.HolidayAudioEngine.setVolume(Number(e.target.value) / 100);
         });
 
         window.HolidayAudioEngine.startAutoplay();
-        const unlock = () => window.HolidayAudioEngine.unlockOnGesture();
+        const unlock = () => {
+            window.HolidayAudioEngine.unlockOnGesture();
+            setTimeout(syncUI, 60);
+        };
         window.addEventListener("pointerdown", unlock, { passive: true });
         window.addEventListener("keydown", unlock, { passive: true });
         syncUI();

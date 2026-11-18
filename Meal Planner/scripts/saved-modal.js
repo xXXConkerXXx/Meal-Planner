@@ -1,3 +1,5 @@
+let deleteAllDishesArmed = false;
+
 function ensureSavedDishesModal() {
     if (document.getElementById("saved-dishes-modal")) return;
 
@@ -8,9 +10,12 @@ function ensureSavedDishesModal() {
 
     modal.innerHTML = `
         <div class="modal-box panel" style="max-width: 640px; max-height: 85vh; display: flex; flex-direction: column;" onclick="event.stopPropagation()">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 12px; gap: 8px;">
                 <h2 style="border: none; margin: 0; padding: 0;">Saved Dishes (<span id="modal-recipe-count">0</span>)</h2>
-                <button type="button" class="btn-outline" style="padding: 4px 10px;" onclick="closeSavedDishesModal()">✕</button>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <button type="button" id="delete-all-dishes-btn" class="btn-outline" style="padding: 4px 10px; font-size: 0.78rem; color: #b32428; border-color: #b32428;" onclick="deleteAllMeals(this)">Delete All</button>
+                    <button type="button" class="btn-outline" style="padding: 4px 10px;" onclick="closeSavedDishesModal()">✕</button>
+                </div>
             </div>
 
             <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
@@ -37,13 +42,44 @@ function ensureSavedDishesModal() {
 
 function openSavedDishesModal() {
     ensureSavedDishesModal();
+    resetDeleteAllDishesBtn();
     renderSavedMealsList();
     document.getElementById("saved-dishes-modal").classList.remove("hidden");
 }
 
 function closeSavedDishesModal() {
+    resetDeleteAllDishesBtn();
     const modal = document.getElementById("saved-dishes-modal");
     if (modal) modal.classList.add("hidden");
+}
+
+function resetDeleteAllDishesBtn() {
+    deleteAllDishesArmed = false;
+    const btn = document.getElementById("delete-all-dishes-btn");
+    if (btn) {
+        btn.textContent = "Delete All";
+        btn.classList.remove("btn-danger-confirm");
+    }
+}
+
+function deleteAllMeals(btn) {
+    if (!meals.length) {
+        showToast("No saved dishes to delete.", true);
+        return;
+    }
+    if (!deleteAllDishesArmed) {
+        deleteAllDishesArmed = true;
+        btn.textContent = "Confirm Delete All?";
+        btn.classList.add("btn-danger-confirm");
+        setTimeout(() => { resetDeleteAllDishesBtn(); }, 4000);
+        return;
+    }
+    resetDeleteAllDishesBtn();
+    if (typeof cancelEditDish === "function") cancelEditDish();
+    meals = [];
+    saveToDisk();
+    refreshAllViews();
+    showToast("Deleted all saved dishes.");
 }
 
 function renderSavedMealsList() {
