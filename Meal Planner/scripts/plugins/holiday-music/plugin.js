@@ -1,0 +1,21 @@
+window._pendingPluginBoot = () => window.ModuleLoader.loadPluginFolder("holiday-music", Array.of(
+    "audio-bus.js",
+    "percussion-synth.js",
+    "voice-synth.js",
+    "lead-synth.js",
+    "arranger.js",
+    "songs/01-january.js",
+    "songs/02-february.js",
+    "songs/03-march.js",
+    "songs/04-april.js",
+    "songs/05-may.js",
+    "songs/06-june.js",
+    "songs/07-july.js",
+    "songs/08-august.js",
+    "songs/09-september.js",
+    "songs/10-october.js",
+    "songs/11-november.js",
+    "songs/12-december.js",
+    "playlist-controller.js",
+    "player-bar.js"
+));
