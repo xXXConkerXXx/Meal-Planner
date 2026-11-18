@@ -2,6 +2,7 @@ window._pendingPluginBoot = () => window.ModuleLoader.loadPluginFolder("meal-pla
     "recipe-dict-dishes.js",
     "recipe-dict-ingredients.js",
     "meal-store.js",
+    "preset-meals.js",
     "recipe-fuzzy-match.js",
     "recipe-autocomplete.js",
     "grocery-aisles.js",

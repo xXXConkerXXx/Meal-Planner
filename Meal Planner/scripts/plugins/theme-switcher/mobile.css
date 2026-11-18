@@ -1,0 +1,51 @@
+/* === MOBILE & TABLET RESPONSIVE LAYOUT === */
+@media (max-width: 768px) {
+    body { padding: 12px 10px 128px 10px; }
+    .month-nav { gap: 8px; }
+    h1 { font-size: 1.35rem; min-width: 0; flex: 1; }
+    .nav-arrow { padding: 7px 10px; font-size: 0.82rem; }
+    .header-controls { gap: 6px; }
+    .header-controls button, .header-controls label { padding: 6px 10px !important; font-size: 0.8rem !important; }
+    .view-switcher { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
+    .view-btn { padding: 8px 6px; font-size: 0.78rem; }
+
+    .calendar-bar { flex-direction: column; align-items: stretch; gap: 6px; }
+    .tabs { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
+    .tab { padding: 8px 4px; font-size: 0.84rem; text-align: center; }
+    .calendar-actions { justify-content: space-between; width: 100%; }
+    .calendar-actions button { flex: 1; padding: 7px 6px; font-size: 0.78rem; }
+
+    .calendar-wrapper { border-radius: 0 0 8px 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .weekdays, .calendar-grid { min-width: 630px; }
+    .day-cell { min-height: 92px; padding: 6px; }
+    .slot-title, .meal-title { font-size: 0.82rem; }
+    .slot-subtext, .meal-items { font-size: 0.72rem; }
+
+    .panel { padding: 14px; }
+    .modal-backdrop { padding: 10px; }
+    .modal-box { max-width: 100% !important; max-height: 88vh !important; }
+    .saved-list li { flex-direction: column; align-items: stretch; }
+    .saved-item-actions { justify-content: flex-end; margin-top: 4px; }
+
+    #holiday-audio-pill {
+        left: 8px !important;
+        right: 8px !important;
+        bottom: 8px !important;
+        transform: none !important;
+        max-width: none !important;
+        padding: 6px 10px !important;
+        gap: 6px !important;
+    }
+    #holiday-song-select { max-width: 155px; font-size: 0.76rem !important; }
+    #holiday-audio-ensemble { display: none !important; }
+    #holiday-vol-slider { width: 64px !important; }
+
+    #open-plugins-btn {
+        top: 10px !important;
+        bottom: auto !important;
+        right: 10px !important;
+        padding: 6px 10px !important;
+        font-size: 0.78rem !important;
+    }
+    #toast { bottom: 76px; left: 12px; right: 12px; text-align: center; }
+}

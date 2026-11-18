@@ -100,6 +100,7 @@ window.MealPlannerPlugin = (function () {
     function activate() {
         window.MealPlannerViews?.mount();
         mountHeaderControls();
+        window.PresetMeals?.seedIfEmpty();
         window.MealStore.syncHolidayRepeats();
         window.CoreCalendar?.registerPlugin({
             tabs: Array.of({ id: "breakfast", label: "Breakfast" }, { id: "lunch", label: "Lunch" }, { id: "dinner", label: "Dinner" }),
