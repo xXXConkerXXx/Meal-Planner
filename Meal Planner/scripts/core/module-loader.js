@@ -3,21 +3,30 @@ window.ModuleLoader = (function () {
     const CORE_SCRIPTS = Array.of(
         "scripts/core/event-bus.js",
         "scripts/core/store.js",
+        "scripts/core/zip-reader.js",
+        "scripts/core/plugin-installer.js",
+        "scripts/core/plugin-card-renderer.js",
+        "scripts/core/plugin-modal-view.js",
         "scripts/core/plugin-manager.js"
     );
 
+    function resolvePath(logicalPath) {
+        return window.CorePluginInstaller?.resolveVirtualUrl?.(logicalPath) || logicalPath;
+    }
+
     function loadStyle(href) {
-        if (document.querySelector(`link[href="${href}"]`)) return;
+        if (document.querySelector(`link[data-logical-href="${href}"]`)) return;
         const link = document.createElement("link");
         link.rel = "stylesheet";
-        link.href = href;
+        link.dataset.logicalHref = href;
+        link.href = resolvePath(href);
         document.head.appendChild(link);
     }
 
     function loadScript(src) {
         return new Promise(resolve => {
             const s = document.createElement("script");
-            s.src = src;
+            s.src = resolvePath(src);
             s.async = false;
             s.onload = () => resolve(true);
             s.onerror = () => { s.remove(); resolve(false); };
@@ -35,19 +44,42 @@ window.ModuleLoader = (function () {
         await loadSequential(files.map(f => `${base}/${f}`));
     }
 
-    function scanPluginsFolder() {
+    function scanPluginsFolder(includeTemplates = false) {
         const input = document.createElement("input");
         input.type = "file";
         input.webkitdirectory = true;
-        input.addEventListener("change", () => {
-            const found = new Set();
+        input.addEventListener("change", async () => {
+            const foundFolders = new Set();
+            const zipFiles = [];
+
             Array.from(input.files || []).forEach(file => {
+                const lower = file.name.toLowerCase();
+                if (lower.endsWith(".zip")) {
+                    if (includeTemplates || !file.name.startsWith("_")) zipFiles.push(file);
+                    return;
+                }
                 const parts = file.webkitRelativePath.split("/");
-                if (parts.length === 3 && parts.at(2) === "plugin.js") found.add(parts.at(1));
-                else if (parts.length === 4 && parts.at(1) === "plugins" && parts.at(3) === "plugin.js") found.add(parts.at(2));
+                const folder = parts.length === 3 ? parts.at(1) : (parts.length === 4 && parts.at(1) === "plugins" ? parts.at(2) : "");
+                const fileName = parts.at(-1);
+                if (!folder || fileName !== "plugin.js") return;
+                if (!includeTemplates && folder.startsWith("_")) return;
+                foundFolders.add(folder);
             });
-            if (!found.size) return;
-            localStorage.setItem(SCAN_KEY, JSON.stringify(Array.from(found)));
+
+            let zipCount = 0;
+            for (const zf of zipFiles) {
+                try {
+                    const installed = await window.CorePluginInstaller?.installFromFile?.(zf, includeTemplates);
+                    zipCount += (installed || []).length;
+                } catch (err) {
+                    console.warn(`[PluginScanner] Skipped ${zf.name}:`, err.message);
+                }
+            }
+
+            if (!foundFolders.size && !zipCount) return;
+            if (foundFolders.size) {
+                localStorage.setItem(SCAN_KEY, JSON.stringify(Array.from(foundFolders)));
+            }
             location.reload();
         });
         input.click();
@@ -57,9 +89,10 @@ window.ModuleLoader = (function () {
         await loadSequential(CORE_SCRIPTS);
         await loadScript("scripts/plugins/manifest.js");
 
+        const virtualIds = await (window.CorePluginInstaller?.preloadVirtualPackages?.() || Promise.resolve([]));
         let savedScan = [];
         try { savedScan = JSON.parse(localStorage.getItem(SCAN_KEY) || "[]"); } catch (e) {}
-        const merged = Array.from(new Set([...(window.INSTALLED_PLUGINS || []), ...savedScan]));
+        const merged = Array.from(new Set([...(window.INSTALLED_PLUGINS || []), ...savedScan, ...virtualIds]));
 
         for (const name of merged) {
             window._pendingPluginBoot = null;

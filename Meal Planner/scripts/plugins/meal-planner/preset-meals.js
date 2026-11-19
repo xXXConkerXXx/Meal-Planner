@@ -21,45 +21,84 @@ window.PresetMeals = (function () {
         { name: "Steamed Green Beans", role: "side", url: "", types: ["lunch", "dinner"], seasons: ALL_SEASONS, itemsList: ["1 lb green beans", "1 tbsp butter", "1 pinch salt"] },
         { name: "Hash Browns", role: "side", url: "", types: ["breakfast"], seasons: ALL_SEASONS, itemsList: ["1 lb potatoes", "2 tbsp vegetable oil", "1 pinch salt"] },
         { name: "Fruit Salad", role: "side", url: "", types: ["breakfast", "lunch"], seasons: ["spring", "summer"], itemsList: ["1 cup strawberries", "1 cup blueberries", "1 banana", "1 tbsp honey"] }
-    ].map(d => Object.assign({}, d, { items: d.itemsList.map(i => "• " + i).join("\n") }));
+    ].map(d => Object.assign({}, d, { isPreset: true, items: d.itemsList.map(i => "• " + i).join("\n") }));
 
-    function scatterStarterPlan(dishes) {
-        const view = window.CoreCalendar?.getViewDate?.() || { year: new Date().getFullYear(), month: new Date().getMonth() };
-        const days = new Date(view.year, view.month + 1, 0).getDate();
-        const plan = {};
+    const PRESET_NAMES = new Set(STARTER_DISHES.map(d => d.name));
+    const isActive = () => !window.CorePlugins || window.CorePlugins.isEnabled("preset-meals");
+    let booted = false;
+
+    function buildSamplePlanForMonth(year, month) {
+        const days = new Date(year, month + 1, 0).getDate();
         const slots = ["breakfast", "lunch", "dinner"];
+        const sample = {};
 
         for (let d = 1; d <= days; d++) {
-            const dk = window.MealStore.formatDateKey(view.year, view.month, d);
-            plan[dk] = {};
+            const dk = window.MealStore.formatDateKey(year, month, d);
+            sample[dk] = {};
             slots.forEach((slot, sIdx) => {
-                const mains = dishes.filter(m => m.role === "main" && m.types.includes(slot));
-                const sides = dishes.filter(m => m.role === "side" && m.types.includes(slot));
-                if (!mains.length) return;
+                const mains = STARTER_DISHES.filter(m => m.role === "main" && m.types.includes(slot));
+                const sides = STARTER_DISHES.filter(m => m.role === "side" && m.types.includes(slot));
                 const main = mains.at((d + sIdx * 2) % mains.length);
                 const attachSide = sides.length && d % 2 === (sIdx % 2) ? [sides.at(d % sides.length)] : [];
-                plan[dk][slot] = { main, sides: attachSide };
+                sample[dk][slot] = { main, sides: attachSide, isPreset: true };
             });
         }
-        return plan;
+        return sample;
     }
 
-    function seedIfEmpty() {
-        if (!window.MealStore || localStorage.getItem(SEED_FLAG)) return false;
+    function applyPresets(fillCalendar = true) {
+        if (!window.MealStore) return;
         localStorage.setItem(SEED_FLAG, "1");
-        if (window.MealStore.getMeals().length > 0) return false;
+        const userDishes = window.MealStore.getMeals().filter(m => !m.isPreset && !PRESET_NAMES.has(m.name));
+        window.MealStore.saveMeals([...STARTER_DISHES, ...userDishes]);
 
-        window.MealStore.saveMeals(STARTER_DISHES);
-        if (!Object.keys(window.MealStore.getPlan()).length) {
-            window.MealStore.savePlan(scatterStarterPlan(STARTER_DISHES));
+        if (fillCalendar && !Object.keys(window.MealStore.getPlan()).length) {
+            const view = window.CoreCalendar?.getViewDate?.() || { year: new Date().getFullYear(), month: new Date().getMonth() };
+            window.MealStore.savePlan(buildSamplePlanForMonth(view.year, view.month));
         }
-        return true;
+        window.MealPlannerPlugin?.refreshAll();
     }
 
-    function resetToPresets() {
-        window.MealStore.saveMeals(STARTER_DISHES);
-        window.MealStore.savePlan(scatterStarterPlan(STARTER_DISHES));
+    function removePresets() {
+        if (!window.MealStore) return;
+        localStorage.setItem(SEED_FLAG, "1");
+        const userDishes = window.MealStore.getMeals().filter(m => !m.isPreset && !PRESET_NAMES.has(m.name));
+        window.MealStore.saveMeals(userDishes);
+
+        const plan = Object.assign({}, window.MealStore.getPlan());
+        Object.keys(plan).forEach(dk => {
+            ["breakfast", "lunch", "dinner"].forEach(slot => {
+                const cur = plan[dk]?.[slot];
+                if (!cur) return;
+                if (cur.isPreset || cur.main?.isPreset || PRESET_NAMES.has(cur.main?.name)) {
+                    delete plan[dk][slot];
+                }
+            });
+            if (!Object.keys(plan[dk]).length) delete plan[dk];
+        });
+
+        window.MealStore.savePlan(plan);
+        window.MealPlannerPlugin?.refreshAll();
     }
 
-    return { seedIfEmpty, resetToPresets, STARTER_DISHES };
+    window.CorePlugins?.register({
+        id: "preset-meals",
+        requires: Array.of("meal-planner"),
+        icon: "🍱",
+        title: "Starter Dishes & Sample Plan",
+        description: "18 built-in starter recipes & sample schedule (toggle OFF for a blank slate)",
+        defaultEnabled: true,
+        enable() {
+            const isInitialBoot = !booted;
+            booted = true;
+            if (isInitialBoot && localStorage.getItem(SEED_FLAG)) return;
+            applyPresets(true);
+        },
+        disable() {
+            booted = true;
+            removePresets();
+        }
+    });
+
+    return { applyPresets, removePresets, isActive };
 })();

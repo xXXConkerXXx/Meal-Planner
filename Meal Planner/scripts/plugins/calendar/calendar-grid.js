@@ -143,6 +143,7 @@ window.CoreCalendar = (function () {
     }
 
     function render() {
+        if (window.CorePlugins && !window.CorePlugins.isEnabled("calendar")) return;
         buildShell();
         const titleEl = document.getElementById("month-title");
         const gridEl = document.getElementById("calendar-grid");
@@ -199,9 +200,6 @@ window.CoreCalendar = (function () {
             document.getElementById("core-calendar-shell")?.classList.add("hidden");
         }
     });
-
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", render);
-    else render();
 
     return {
         render,

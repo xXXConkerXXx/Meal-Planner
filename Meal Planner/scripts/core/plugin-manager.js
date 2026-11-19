@@ -1,5 +1,5 @@
 window.CorePlugins = (function () {
-    const store = window.CoreStore.createNamespace("plugins", { enabled: {}, collapsed: {} });
+    const store = window.CoreStore.createNamespace("plugins", { enabled: {}, collapsed: {}, launcher: "full" });
     const registry = new Map();
 
     function isSelfEnabled(id) {
@@ -10,8 +10,7 @@ window.CorePlugins = (function () {
     }
 
     function isCollapsed(id) {
-        const saved = store.get("collapsed", {});
-        return Boolean(saved[id]);
+        return Boolean(store.get("collapsed", {})[id]);
     }
 
     function toggleCollapsed(id) {
@@ -21,16 +20,31 @@ window.CorePlugins = (function () {
         renderModalList();
     }
 
-    function getMissingParents(id) {
+    function getMissingParents(id, visited = new Set()) {
+        if (visited.has(id)) return [];
+        visited.add(id);
         const plugin = registry.get(id);
         if (!plugin || !Array.isArray(plugin.requires)) return [];
-        return plugin.requires.filter(parentId => !registry.has(parentId));
+
+        const missing = new Set();
+        plugin.requires.forEach(parentId => {
+            if (!registry.has(parentId)) missing.add(parentId);
+            else getMissingParents(parentId, new Set(visited)).forEach(m => missing.add(m));
+        });
+        return Array.from(missing);
     }
 
-    function areDepsMet(id) {
+    function areDepsMet(id, visited = new Set()) {
+        if (visited.has(id)) return false;
+        visited.add(id);
         const plugin = registry.get(id);
         if (!plugin || !Array.isArray(plugin.requires)) return true;
-        return plugin.requires.every(parentId => registry.has(parentId) && isEnabled(parentId));
+
+        return plugin.requires.every(parentId =>
+            registry.has(parentId) &&
+            isSelfEnabled(parentId) &&
+            areDepsMet(parentId, new Set(visited))
+        );
     }
 
     function isEnabled(id) {
@@ -41,10 +55,7 @@ window.CorePlugins = (function () {
         const saved = Object.assign({}, store.get("enabled", {}));
         let changed = false;
         Object.keys(saved).forEach(id => {
-            if (!registry.has(id)) {
-                delete saved[id];
-                changed = true;
-            }
+            if (!registry.has(id)) { delete saved[id]; changed = true; }
         });
         if (changed) store.set("enabled", saved);
         registry.forEach((plugin, id) => {
@@ -52,13 +63,15 @@ window.CorePlugins = (function () {
         });
     }
 
-    function syncDependents(parentId) {
+    function syncDependents(parentId, visited = new Set()) {
+        if (visited.has(parentId)) return;
+        visited.add(parentId);
         registry.forEach((child, childId) => {
             if (!Array.isArray(child.requires) || !child.requires.includes(parentId)) return;
             const active = isEnabled(childId);
             if (active && typeof child.enable === "function") child.enable();
             if (!active && typeof child.disable === "function") child.disable();
-            syncDependents(childId);
+            syncDependents(childId, visited);
         });
     }
 
@@ -88,119 +101,109 @@ window.CorePlugins = (function () {
         syncDependents(def.id);
     }
 
-    function ensureModal() {
-        if (document.getElementById("core-plugins-modal")) return;
-        const modal = document.createElement("div");
-        modal.id = "core-plugins-modal";
-        modal.className = "modal-backdrop hidden screen-only";
-        modal.addEventListener("click", () => modal.classList.add("hidden"));
-
-        modal.innerHTML = `
-            <div class="modal-box panel" style="max-width: 490px; max-height: 82vh; overflow-y: auto;" onclick="event.stopPropagation()">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; gap: 8px;">
-                    <h2 style="border: none; margin: 0; padding: 0;">🧩 Installed Plugins</h2>
-                    <div style="display: flex; gap: 6px; align-items: center;">
-                        <button type="button" id="scan-plugins-btn" class="btn-outline" title="Scan scripts/plugins folder for new plugins" style="padding: 4px 10px; font-size: 0.78rem;">📁 Scan</button>
-                        <button type="button" id="close-plugins-modal" class="btn-outline" style="padding: 4px 10px;">✕</button>
-                    </div>
-                </div>
-                <div id="core-plugins-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
-            </div>
-        `;
-        modal.querySelector("#scan-plugins-btn").addEventListener("click", () => window.ModuleLoader?.scanPluginsFolder?.());
-        modal.querySelector("#close-plugins-modal").addEventListener("click", () => modal.classList.add("hidden"));
-        document.body.appendChild(modal);
+    function openModal() {
+        window.CorePluginModal?.ensure();
+        renderModalList();
+        syncLauncherUI();
+        document.getElementById("core-plugins-modal")?.classList.remove("hidden");
     }
 
-    function renderPluginCard(p, isSub = false, childCount = 0) {
-        const missing = getMissingParents(p.id);
-        const depsOk = areDepsMet(p.id);
-        const active = isEnabled(p.id);
-        const collapsed = isCollapsed(p.id);
-        const indent = isSub ? "margin-left: 20px; border-left: 3px solid var(--title-color);" : "";
-        const prefix = isSub ? "↳ " : "";
-        const btnLabel = missing.length ? "MISSING" : (!depsOk ? "LOCKED" : (active ? "ON" : "OFF"));
-        const btnClass = !depsOk ? "btn-outline" : (active ? "btn-green" : "btn-outline");
-        const extraHTML = typeof p.renderExtra === "function" ? p.renderExtra() : "";
+    function setLauncherMode(mode) {
+        store.set("launcher", mode);
+        syncLauncherUI();
+    }
 
-        const collapseBtn = (!isSub && childCount > 0)
-            ? `<button type="button" data-collapse-plugin="${p.id}" class="btn-outline" title="${collapsed ? "Expand sub-plugins" : "Minimize sub-plugins"}" style="padding: 2px 8px; font-size: 0.76rem; margin-left: 6px;">${collapsed ? `▸ ${childCount}` : `▾ ${childCount}`}</button>`
-            : "";
+    function toggleLauncherHidden() {
+        const next = store.get("launcher", "full") === "hidden" ? "full" : "hidden";
+        setLauncherMode(next);
+    }
 
-        return `
-            <div data-plugin-card="${p.id}" style="padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); transition: all 0.18s ease; ${indent} ${!depsOk ? "opacity: 0.65;" : ""}">
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                    <div style="flex: 1;">
-                        <div style="font-weight: bold; font-size: 0.92rem; display: flex; align-items: center; flex-wrap: wrap;">
-                            <span>${prefix}${p.icon || "🔌"} ${p.title}</span>${collapseBtn}
-                        </div>
-                        <div style="font-size: 0.78rem; color: var(--text-muted);">${missing.length ? `Requires missing plugin: ${missing.join(", ")}` : (p.description || "")}</div>
-                    </div>
-                    <button type="button" data-toggle-plugin="${p.id}" class="${btnClass}" ${!depsOk ? "disabled" : ""} style="min-width: 72px;">
-                        ${btnLabel}
-                    </button>
-                </div>
-                ${extraHTML}
-            </div>
-        `;
+    function syncLauncherUI() {
+        const mode = store.get("launcher", "full");
+        const dock = document.getElementById("open-plugins-btn");
+        const visBtn = document.getElementById("toggle-launcher-vis-btn");
+        if (visBtn) visBtn.textContent = mode === "hidden" ? "👁️ Show Btn" : "👁️ Hide Btn";
+        if (!dock) return;
+
+        dock.style.display = mode === "hidden" ? "none" : "inline-flex";
+        const mainBtn = dock.querySelector("#plugins-dock-open");
+        const minBtn = dock.querySelector("#plugins-dock-min");
+
+        if (mode === "mini") {
+            dock.style.right = "0px";
+            dock.style.borderRadius = "8px 0 0 8px";
+            dock.style.padding = "4px 6px";
+            dock.style.opacity = "0.75";
+            if (mainBtn) mainBtn.textContent = "🧩";
+            if (minBtn) minBtn.style.display = "none";
+        } else {
+            dock.style.right = "16px";
+            dock.style.borderRadius = "8px";
+            dock.style.padding = "0";
+            dock.style.opacity = "1";
+            if (mainBtn) mainBtn.textContent = "🧩 Plugins";
+            if (minBtn) minBtn.style.display = "inline-block";
+        }
     }
 
     function renderModalList() {
         const listEl = document.getElementById("core-plugins-list");
-        if (!listEl) return;
+        if (!listEl || !window.CorePluginModal) return;
+        window.CorePluginModal.renderList(listEl, Array.from(registry.values()), {
+            isEnabled, getMissingParents, areDepsMet, isCollapsed, toggleCollapsed,
+            toggleEnabled: id => setEnabled(id, !isSelfEnabled(id))
+        });
+    }
 
-        const all = Array.from(registry.values());
-        const sortRoots = (a, b) => {
-            if (Boolean(a.pinnedTop) !== Boolean(b.pinnedTop)) return a.pinnedTop ? -1 : 1;
-            return Number(isEnabled(b.id)) - Number(isEnabled(a.id));
-        };
-        const sortChildren = (a, b) => Number(isEnabled(b.id)) - Number(isEnabled(a.id));
-        const roots = all.filter(p => !Array.isArray(p.requires) || !p.requires.length || getMissingParents(p.id).length > 0).sort(sortRoots);
-        let html = "";
-
-        roots.forEach(root => {
-            const children = all.filter(c => Array.isArray(c.requires) && c.requires.includes(root.id)).sort(sortChildren);
-            html += renderPluginCard(root, false, children.length);
-            if (!isCollapsed(root.id)) {
-                children.forEach(child => { html += renderPluginCard(child, true, 0); });
+    function bindUniversalReveal() {
+        document.addEventListener("keydown", e => {
+            if ((e.altKey && e.key.toLowerCase() === "p") || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "p")) {
+                e.preventDefault();
+                openModal();
             }
         });
 
-        listEl.innerHTML = html || `<p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">No plugins registered yet.</p>`;
-        listEl.querySelectorAll("button[data-collapse-plugin]").forEach(btn => {
-            btn.addEventListener("click", () => toggleCollapsed(btn.dataset.collapsePlugin));
-        });
-        listEl.querySelectorAll("button[data-toggle-plugin]:not([disabled])").forEach(btn => {
-            btn.addEventListener("click", () => setEnabled(btn.dataset.togglePlugin, !isSelfEnabled(btn.dataset.togglePlugin)));
-        });
-        all.forEach(p => {
-            if (typeof p.bindExtra === "function") {
-                const card = listEl.querySelector(`[data-plugin-card="${p.id}"]`);
-                if (card) p.bindExtra(card);
+        let tapCount = 0, tapTimer = null;
+        document.addEventListener("touchend", e => {
+            if (e.target.closest("button, input, select, textarea, a, label, .modal-box")) return;
+            tapCount++;
+            clearTimeout(tapTimer);
+            if (tapCount >= 3) {
+                tapCount = 0;
+                openModal();
+            } else {
+                tapTimer = setTimeout(() => { tapCount = 0; }, 550);
             }
-        });
+        }, { passive: true });
     }
 
     function init() {
         if (document.getElementById("open-plugins-btn")) return;
+        const dock = document.createElement("div");
+        dock.id = "open-plugins-btn";
+        dock.className = "screen-only";
+        dock.style.cssText = "position: fixed; bottom: 16px; right: 16px; z-index: 25; display: inline-flex; align-items: stretch; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); overflow: hidden; transition: all 0.18s ease;";
+        dock.innerHTML = `
+            <button type="button" id="plugins-dock-open" class="btn-outline" style="border: none; border-radius: 0; padding: 8px 12px; margin: 0;">🧩 Plugins</button>
+            <button type="button" id="plugins-dock-min" class="btn-outline" title="Dock to screen edge" style="border: none; border-left: 1px solid var(--border-color); border-radius: 0; padding: 8px 8px; margin: 0; color: var(--text-muted);">–</button>
+        `;
 
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.id = "open-plugins-btn";
-        btn.className = "btn-outline screen-only";
-        btn.textContent = "🧩 Plugins";
-        btn.title = "Manage Installed Plugins";
-        btn.style.cssText = "position: fixed; bottom: 16px; right: 16px; z-index: 25; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); padding: 8px 14px;";
-        btn.addEventListener("click", () => {
-            ensureModal();
-            renderModalList();
-            document.getElementById("core-plugins-modal").classList.remove("hidden");
+        dock.querySelector("#plugins-dock-open").addEventListener("click", () => {
+            if (store.get("launcher", "full") === "mini") setLauncherMode("full");
+            else openModal();
         });
-        document.body.appendChild(btn);
+        dock.querySelector("#plugins-dock-min").addEventListener("click", e => {
+            e.stopPropagation();
+            setLauncherMode("mini");
+        });
+
+        document.body.appendChild(dock);
+        syncLauncherUI();
+        bindUniversalReveal();
     }
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
     else init();
 
-    return { register, isEnabled, setEnabled, pruneUninstalled };
+    return { register, isEnabled, setEnabled, pruneUninstalled, openModal, toggleLauncherHidden };
 })();

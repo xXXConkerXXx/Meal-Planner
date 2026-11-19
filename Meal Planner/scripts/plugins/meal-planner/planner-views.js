@@ -22,8 +22,8 @@ window.MealPlannerViews = {
                         <textarea id="meal-items" rows="5" required placeholder="1 lb chicken breast&#10;2 cups pasta"></textarea>
                         <label>Meal Times</label>
                         <div id="meal-type-checks" class="check-row">
-                            <label><input type="checkbox" value="breakfast"> Breakfast</label>
-                            <label><input type="checkbox" value="lunch"> Lunch</label>
+                            <label><input type="checkbox" value="breakfast" checked> Breakfast</label>
+                            <label><input type="checkbox" value="lunch" checked> Lunch</label>
                             <label><input type="checkbox" value="dinner" checked> Dinner</label>
                         </div>
                         <label>Seasons</label>

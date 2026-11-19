@@ -4,6 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendar With Plugins</title>
+
+    <!-- Optional Fallback Base Styles (Used when no theme plugin is active yet) -->
+    <style>
+        /* Default color variables (overridden automatically by theme-switcher) */
+        :root {
+            --bg-main: #181615;
+            --bg-card: #24211f;
+            --text-main: #f2ece4;
+            --text-muted: #b5a99c;
+            --border-color: #423b36;
+            --title-color: #e05a47;
+        }
+
+        /* Core page reset & typography */
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Utility visibility helpers */
+        .hidden { display: none !important; }
+        .print-only { display: none; }
+
+        /* Base card & button styles for the Plugins modal on a blank slate */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        button {
+            background: #8b261d;
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-green { background: #2e5a36; }
+        .btn-outline {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Modal backdrop & dialog container */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            padding: 20px;
+        }
+        .modal-box {
+            width: 100%;
+            max-width: 490px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Global toast notification banner */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2e5a36;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            z-index: 1200;
+        }
+        #toast.show { opacity: 1; }
+        #toast.error { background: #8b261d; }
+    </style>
 </head>
 <body>
     <!-- Dynamic Plugin Views & Modals Mount Here -->

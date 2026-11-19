@@ -1,0 +1,5 @@
+/* Scope all selectors to your plugin container so they never clash with other plugins */
+#my-plugin-root {
+    max-width: 1100px;
+    margin: 20px auto;
+}

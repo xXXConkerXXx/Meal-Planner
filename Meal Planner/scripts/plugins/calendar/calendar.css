@@ -1,3 +1,9 @@
+/* Self-contained header alignment when theme-switcher isn't loaded */
+#core-calendar-shell header { text-align: center; margin-bottom: 16px; }
+#core-calendar-shell .month-nav { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 10px; }
+#core-calendar-shell .header-controls { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+#core-calendar-shell h1 { color: var(--title-color); margin: 0; min-width: 220px; }
+
 .calendar-bar, .calendar-wrapper, .edit-grid, .grocery-panel { max-width: 1100px; margin: 0 auto 15px auto; }
 .calendar-bar { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; margin-bottom: 0; }
 .calendar-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 6px; }

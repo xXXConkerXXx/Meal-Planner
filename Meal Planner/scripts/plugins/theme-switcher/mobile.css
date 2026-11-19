@@ -1,51 +1,81 @@
 /* === MOBILE & TABLET RESPONSIVE LAYOUT === */
 @media (max-width: 768px) {
-    body { padding: 12px 10px 128px 10px; }
+    body { padding: 12px 10px 92px 10px; }
+
     .month-nav { gap: 8px; }
-    h1 { font-size: 1.35rem; min-width: 0; flex: 1; }
+    h1 { font-size: 1.45rem; min-width: 0; flex: 1; }
     .nav-arrow { padding: 7px 10px; font-size: 0.82rem; }
+
     .header-controls { gap: 6px; }
-    .header-controls button, .header-controls label { padding: 6px 10px !important; font-size: 0.8rem !important; }
+    .header-controls button,
+    .header-controls label,
+    #season-badge { padding: 6px 10px !important; font-size: 0.80rem !important; font-weight: bold !important; }
+
     .view-switcher { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
-    .view-btn { padding: 8px 6px; font-size: 0.78rem; }
+    .view-btn { padding: 8px 4px; font-size: 0.76rem; }
 
     .calendar-bar { flex-direction: column; align-items: stretch; gap: 6px; }
     .tabs { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
     .tab { padding: 8px 4px; font-size: 0.84rem; text-align: center; }
-    .calendar-actions { justify-content: space-between; width: 100%; }
-    .calendar-actions button { flex: 1; padding: 7px 6px; font-size: 0.78rem; }
+    .calendar-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width: 100%; }
+    .calendar-actions button { padding: 7px 6px; font-size: 0.78rem; }
 
-    .calendar-wrapper { border-radius: 0 0 8px 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .weekdays, .calendar-grid { min-width: 630px; }
-    .day-cell { min-height: 92px; padding: 6px; }
+    .calendar-wrapper {
+        border-radius: 0 0 8px 8px;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    .weekdays, .calendar-grid { min-width: 680px !important; }
+    .day-cell { min-height: 96px; padding: 6px; }
     .slot-title, .meal-title { font-size: 0.82rem; }
     .slot-subtext, .meal-items { font-size: 0.72rem; }
 
     .panel { padding: 14px; }
     .modal-backdrop { padding: 10px; }
-    .modal-box { max-width: 100% !important; max-height: 88vh !important; }
+    .modal-box { max-width: 100% !important; max-height: 86vh !important; }
     .saved-list li { flex-direction: column; align-items: stretch; }
     .saved-item-actions { justify-content: flex-end; margin-top: 4px; }
 
-    #holiday-audio-pill {
+    /* Compact single-bar docked music player + Plugins button side by side */
+    div#holiday-audio-pill {
         left: 8px !important;
-        right: 8px !important;
+        right: 96px !important;
         bottom: 8px !important;
         transform: none !important;
         max-width: none !important;
-        padding: 6px 10px !important;
+        width: auto !important;
+        padding: 6px 8px !important;
         gap: 6px !important;
+        flex-wrap: nowrap !important;
     }
-    #holiday-song-select { max-width: 155px; font-size: 0.76rem !important; }
-    #holiday-audio-ensemble { display: none !important; }
-    #holiday-vol-slider { width: 64px !important; }
+    div#holiday-audio-pill > div:first-child {
+        flex-wrap: nowrap !important;
+        overflow: hidden;
+        gap: 4px !important;
+    }
+    div#holiday-audio-pill > div:last-child,
+    #holiday-loop-btn,
+    #holiday-shuffle-btn,
+    #holiday-reset-month-btn,
+    #holiday-audio-ensemble {
+        display: none !important;
+    }
+    #holiday-audio-btn { padding: 5px 8px !important; font-size: 0.74rem !important; white-space: nowrap; }
+    #holiday-next-btn { padding: 5px 7px !important; font-size: 0.74rem !important; }
+    #holiday-song-select {
+        min-width: 0 !important;
+        flex: 1;
+        font-size: 0.74rem !important;
+        padding: 4px 6px !important;
+    }
 
-    #open-plugins-btn {
-        top: 10px !important;
-        bottom: auto !important;
-        right: 10px !important;
-        padding: 6px 10px !important;
+    button#open-plugins-btn {
+        right: 8px !important;
+        bottom: 8px !important;
+        top: auto !important;
+        padding: 7px 10px !important;
         font-size: 0.78rem !important;
     }
-    #toast { bottom: 76px; left: 12px; right: 12px; text-align: center; }
+
+    #toast { bottom: 62px; left: 10px; right: 10px; text-align: center; }
 }
